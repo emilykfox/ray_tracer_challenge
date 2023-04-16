@@ -1,7 +1,9 @@
+const EQUALITY_EPSILON: f64 = 0.00001;
+
 /// A 4-dimensional tuple
 /// You generally won't construct these directly but instead by casting
 /// from `Point` and `Vector`
-#[derive(Debug, Default, Copy, Clone, PartialEq)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct Tuple {
     pub x: f64,
     pub y: f64,
@@ -23,6 +25,15 @@ impl Tuple {
     /// Returns `true` if tuple represents a 3-dimensional vector
     pub fn is_vector(&self) -> bool {
         self.w == 0.0
+    }
+}
+
+impl PartialEq for Tuple {
+    fn eq(&self, other: &Self) -> bool {
+        (self.x - other.x).abs() < EQUALITY_EPSILON
+            && (self.y - other.y).abs() < EQUALITY_EPSILON
+            && (self.z - other.z).abs() < EQUALITY_EPSILON
+            && (self.w - other.w).abs() < EQUALITY_EPSILON
     }
 }
 
