@@ -34,6 +34,10 @@ impl Tuple {
     pub fn normalize(&self) -> Tuple {
         *self / self.magnitude()
     }
+
+    pub fn dot(a: Tuple, b: Tuple) -> f64 {
+        a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w
+    }
 }
 
 impl PartialEq for Tuple {
@@ -217,6 +221,10 @@ impl Vector {
         Vector {
             tuple: self.tuple.normalize(),
         }
+    }
+
+    pub fn dot(a: Vector, b: Vector) -> f64 {
+        Tuple::dot(a.tuple, b.tuple)
     }
 }
 
@@ -506,5 +514,12 @@ mod tests {
         let v = Vector::new(1.0, 2.0, 3.0);
         let norm = v.normalize();
         assert_eq!(norm.magnitude(), 1.0);
+    }
+
+    #[test]
+    fn dot() {
+        let a = Vector::new(1.0, 2.0, 3.0);
+        let b = Vector::new(2.0, 3.0, 4.0);
+        assert_eq!(Vector::dot(a, b), 20.0);
     }
 }
