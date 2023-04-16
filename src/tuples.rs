@@ -26,6 +26,19 @@ impl Tuple {
     }
 }
 
+impl std::ops::Add for Tuple {
+    type Output = Tuple;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Tuple {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
+            w: self.w + rhs.w,
+        }
+    }
+}
+
 impl From<Point> for Tuple {
     fn from(value: Point) -> Self {
         value.tuple
@@ -67,6 +80,16 @@ impl TryFrom<Tuple> for Point {
     }
 }
 
+impl std::ops::Add<Vector> for Point {
+    type Output = Point;
+
+    fn add(self, rhs: Vector) -> Self::Output {
+        Point {
+            tuple: self.tuple + rhs.tuple,
+        }
+    }
+}
+
 /// A 3-dimensional vector
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct Vector {
@@ -90,6 +113,26 @@ impl TryFrom<Tuple> for Vector {
             Err(InvalidTupleError)
         } else {
             Ok(Vector { tuple: value })
+        }
+    }
+}
+
+impl std::ops::Add<Point> for Vector {
+    type Output = Point;
+
+    fn add(self, rhs: Point) -> Self::Output {
+        Point {
+            tuple: self.tuple + rhs.tuple,
+        }
+    }
+}
+
+impl std::ops::Add<Vector> for Vector {
+    type Output = Vector;
+
+    fn add(self, rhs: Vector) -> Self::Output {
+        Vector {
+            tuple: self.tuple + rhs.tuple,
         }
     }
 }
@@ -132,5 +175,20 @@ mod tests {
     fn create_vectors() {
         let v = Vector::new(4.0, -4.0, 3.0);
         assert_eq!(Tuple::from(v), Tuple::new(4.0, -4.0, 3.0, 0.0));
+    }
+
+    #[test]
+    fn add_tuples() {
+        let a1 = Tuple::new(3.0, -2.0, 5.0, 1.0);
+        let a2 = Tuple::new(-2.0, 3.0, 1.0, 0.0);
+        assert_eq!(a1 + a2, Tuple::new(1.0, 1.0, 6.0, 1.0));
+
+        let p = Point::new(3.0, -2.0, 5.0);
+        let v1 = Vector::new(3.0, -2.0, 5.0);
+        let v2 = Vector::new(-2.0, 3.0, 1.0);
+
+        assert_eq!(p + v2, Point::new(1.0, 1.0, 6.0));
+        assert_eq!(v2 + p, Point::new(1.0, 1.0, 6.0));
+        assert_eq!(v1 + v2, Vector::new(1.0, 1.0, 6.0));
     }
 }
