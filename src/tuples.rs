@@ -30,6 +30,10 @@ impl Tuple {
     pub fn magnitude(&self) -> f64 {
         (self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w).sqrt()
     }
+
+    pub fn normalize(&self) -> Tuple {
+        *self / self.magnitude()
+    }
 }
 
 impl PartialEq for Tuple {
@@ -207,6 +211,12 @@ impl Vector {
 
     pub fn magnitude(&self) -> f64 {
         self.tuple.magnitude()
+    }
+
+    pub fn normalize(&self) -> Vector {
+        Vector {
+            tuple: self.tuple.normalize(),
+        }
     }
 }
 
@@ -470,5 +480,31 @@ mod tests {
     fn magnitude_negative() {
         let v = Vector::new(-1.0, -2.0, -3.0);
         assert_eq!(v.magnitude(), 14.0_f64.sqrt());
+    }
+
+    #[test]
+    fn normalize_horizontal_vector() {
+        let v = Vector::new(4.0, 0.0, 0.0);
+        assert_eq!(v.normalize(), Vector::new(1.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn normalize_vector() {
+        let v = Vector::new(1.0, 2.0, 3.0);
+        assert_eq!(
+            v.normalize(),
+            Vector::new(
+                1.0 / 14.0_f64.sqrt(),
+                2.0 / 14.0_f64.sqrt(),
+                3.0 / 14.0_f64.sqrt()
+            )
+        );
+    }
+
+    #[test]
+    fn magnitude_of_normalized() {
+        let v = Vector::new(1.0, 2.0, 3.0);
+        let norm = v.normalize();
+        assert_eq!(norm.magnitude(), 1.0);
     }
 }
