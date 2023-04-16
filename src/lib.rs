@@ -1,1 +1,3 @@
-pub mod tuples;
+mod tuples;
+
+pub use tuples::{Point, Vector};
