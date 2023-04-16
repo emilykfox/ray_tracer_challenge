@@ -226,6 +226,14 @@ impl Vector {
     pub fn dot(a: Vector, b: Vector) -> f64 {
         Tuple::dot(a.tuple, b.tuple)
     }
+
+    pub fn cross(a: Vector, b: Vector) -> Vector {
+        Vector::new(
+            a.tuple.y * b.tuple.z - a.tuple.z * b.tuple.y,
+            a.tuple.z * b.tuple.x - a.tuple.x * b.tuple.z,
+            a.tuple.x * b.tuple.y - a.tuple.y * b.tuple.x,
+        )
+    }
 }
 
 impl TryFrom<Tuple> for Vector {
@@ -521,5 +529,13 @@ mod tests {
         let a = Vector::new(1.0, 2.0, 3.0);
         let b = Vector::new(2.0, 3.0, 4.0);
         assert_eq!(Vector::dot(a, b), 20.0);
+    }
+
+    #[test]
+    fn cross() {
+        let a = Vector::new(1.0, 2.0, 3.0);
+        let b = Vector::new(2.0, 3.0, 4.0);
+        assert_eq!(Vector::cross(a, b), Vector::new(-1.0, 2.0, -1.0));
+        assert_eq!(Vector::cross(b, a), Vector::new(1.0, -2.0, 1.0));
     }
 }
