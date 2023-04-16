@@ -42,7 +42,7 @@ fn main() {
         projectile = tick(environment, projectile);
         num_ticks += 1;
         println!(
-            "Projectile at ({}, {}, {}) after {} tick(s).",
+            "Projectile at ({:.2}, {:.2}, {:.2}) after {} tick(s).",
             projectile.position.x(),
             projectile.position.y(),
             projectile.position.z(),
@@ -51,5 +51,5 @@ fn main() {
     }
 
     println!();
-    println!("Projectile took {num_ticks} to hit the ground!");
+    println!("Projectile took {num_ticks} ticks to hit the ground!");
 }
