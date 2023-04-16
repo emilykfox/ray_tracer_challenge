@@ -75,6 +75,19 @@ impl std::ops::Sub for Tuple {
     }
 }
 
+impl std::ops::Neg for Tuple {
+    type Output = Tuple;
+
+    fn neg(self) -> Self::Output {
+        Tuple {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+            w: -self.w,
+        }
+    }
+}
+
 pub struct InvalidTupleError;
 
 /// A 3-dimensional point
@@ -191,6 +204,14 @@ impl std::ops::Sub for Vector {
     }
 }
 
+impl std::ops::Neg for Vector {
+    type Output = Vector;
+
+    fn neg(self) -> Self::Output {
+        Vector { tuple: -self.tuple }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -272,5 +293,24 @@ mod tests {
         let v1 = Vector::new(3.0, 2.0, 1.0);
         let v2 = Vector::new(5.0, 6.0, 7.0);
         assert_eq!(v1 - v2, Vector::new(-2.0, -4.0, -6.0));
+    }
+
+    #[test]
+    fn subtract_vector_from_zero() {
+        let zero = Vector::new(0.0, 0.0, 0.0);
+        let v = Vector::new(1.0, -2.0, 3.0);
+        assert_eq!(zero - v, Vector::new(-1.0, 2.0, -3.0));
+    }
+
+    #[test]
+    fn negate_tuple() {
+        let a = Tuple::new(1.0, -2.0, 3.0, -4.0);
+        assert_eq!(-a, Tuple::new(-1.0, 2.0, -3.0, 4.0));
+    }
+
+    #[test]
+    fn negate_vector() {
+        let v = Vector::new(1.0, -2.0, 3.0);
+        assert_eq!(-v, Vector::new(-1.0, 2.0, -3.0));
     }
 }
