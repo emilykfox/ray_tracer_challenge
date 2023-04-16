@@ -88,6 +88,7 @@ impl std::ops::Neg for Tuple {
     }
 }
 
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct InvalidTupleError;
 
 /// A 3-dimensional point
@@ -250,6 +251,22 @@ mod tests {
     fn create_vectors() {
         let v = Vector::new(4.0, -4.0, 3.0);
         assert_eq!(Tuple::from(v), Tuple::new(4.0, -4.0, 3.0, 0.0));
+    }
+
+    #[test]
+    fn create_points_from_tuples() {
+        let a1 = Tuple::new(4.0, -4.0, 3.0, 1.0);
+        let a2 = Tuple::new(4.0, -4.0, 3.0, 0.0);
+        assert_eq!(Point::try_from(a1), Ok(Point::new(4.0, -4.0, 3.0)));
+        assert_eq!(Point::try_from(a2), Err(InvalidTupleError));
+    }
+
+    #[test]
+    fn create_vectors_from_tuples() {
+        let a1 = Tuple::new(4.0, -4.0, 3.0, 0.0);
+        let a2 = Tuple::new(4.0, -4.0, 3.0, 1.0);
+        assert_eq!(Vector::try_from(a1), Ok(Vector::new(4.0, -4.0, 3.0)));
+        assert_eq!(Vector::try_from(a2), Err(InvalidTupleError));
     }
 
     #[test]
