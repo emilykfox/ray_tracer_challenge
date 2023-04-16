@@ -26,6 +26,10 @@ impl Tuple {
     pub fn is_vector(&self) -> bool {
         self.w == 0.0
     }
+
+    pub fn magnitude(&self) -> f64 {
+        (self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w).sqrt()
+    }
 }
 
 impl PartialEq for Tuple {
@@ -202,8 +206,7 @@ impl Vector {
     }
 
     pub fn magnitude(&self) -> f64 {
-        let tuple = &self.tuple;
-        (tuple.x * tuple.x + tuple.y * tuple.y + tuple.z * tuple.z).sqrt()
+        self.tuple.magnitude()
     }
 }
 
