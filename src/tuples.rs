@@ -1,4 +1,6 @@
 /// A 4-dimensional tuple
+/// You generally won't construct these directly but instead by casting
+/// from `Point` and `Vector`
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct Tuple {
     pub x: f64,
@@ -9,7 +11,7 @@ pub struct Tuple {
 
 impl Tuple {
     /// Returns a new `Tuple`
-    pub fn new(x: f64, y: f64, z: f64, w: f64) -> Self {
+    fn new(x: f64, y: f64, z: f64, w: f64) -> Self {
         Tuple { x, y, z, w }
     }
 
@@ -24,15 +26,15 @@ impl Tuple {
     }
 }
 
-impl PartialEq<Point> for Tuple {
-    fn eq(&self, other: &Point) -> bool {
-        *self == other.tuple
+impl From<Point> for Tuple {
+    fn from(value: Point) -> Self {
+        value.tuple
     }
 }
 
-impl PartialEq<Vector> for Tuple {
-    fn eq(&self, other: &Vector) -> bool {
-        *self == other.tuple
+impl From<Vector> for Tuple {
+    fn from(value: Vector) -> Self {
+        value.tuple
     }
 }
 
@@ -51,9 +53,10 @@ impl Point {
     }
 }
 
-impl PartialEq<Tuple> for Point {
-    fn eq(&self, other: &Tuple) -> bool {
-        self.tuple == *other
+impl From<Tuple> for Point {
+    fn from(value: Tuple) -> Self {
+        debug_assert!(value.is_point());
+        Point { tuple: value }
     }
 }
 
@@ -72,9 +75,10 @@ impl Vector {
     }
 }
 
-impl PartialEq<Tuple> for Vector {
-    fn eq(&self, other: &Tuple) -> bool {
-        self.tuple == *other
+impl From<Tuple> for Vector {
+    fn from(value: Tuple) -> Self {
+        debug_assert!(value.is_vector());
+        Vector { tuple: value }
     }
 }
 
@@ -109,14 +113,12 @@ mod tests {
     #[test]
     fn create_points() {
         let p = Point::new(4.0, -4.0, 3.0);
-        assert_eq!(p, Tuple::new(4.0, -4.0, 3.0, 1.0));
-        assert_eq!(Tuple::new(4.0, -4.0, 3.0, 1.0), p);
+        assert_eq!(Tuple::from(p), Tuple::new(4.0, -4.0, 3.0, 1.0));
     }
 
     #[test]
     fn create_vectors() {
         let v = Vector::new(4.0, -4.0, 3.0);
-        assert_eq!(v, Tuple::new(4.0, -4.0, 3.0, 0.0));
-        assert_eq!(Tuple::new(4.0, -4.0, 3.0, 0.0), v);
+        assert_eq!(Tuple::from(v), Tuple::new(4.0, -4.0, 3.0, 0.0));
     }
 }
