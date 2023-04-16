@@ -88,6 +88,45 @@ impl std::ops::Neg for Tuple {
     }
 }
 
+impl std::ops::Mul<f64> for Tuple {
+    type Output = Tuple;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        Tuple {
+            x: self.x * rhs,
+            y: self.y * rhs,
+            z: self.z * rhs,
+            w: self.w * rhs,
+        }
+    }
+}
+
+impl std::ops::Mul<Tuple> for f64 {
+    type Output = Tuple;
+
+    fn mul(self, rhs: Tuple) -> Self::Output {
+        Tuple {
+            x: self * rhs.x,
+            y: self * rhs.y,
+            z: self * rhs.z,
+            w: self * rhs.w,
+        }
+    }
+}
+
+impl std::ops::Div<f64> for Tuple {
+    type Output = Tuple;
+
+    fn div(self, rhs: f64) -> Self::Output {
+        Tuple {
+            x: self.x / rhs,
+            y: self.y / rhs,
+            z: self.z / rhs,
+            w: self.w / rhs,
+        }
+    }
+}
+
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct InvalidTupleError;
 
@@ -213,6 +252,36 @@ impl std::ops::Neg for Vector {
     }
 }
 
+impl std::ops::Mul<f64> for Vector {
+    type Output = Vector;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        Vector {
+            tuple: self.tuple * rhs,
+        }
+    }
+}
+
+impl std::ops::Mul<Vector> for f64 {
+    type Output = Vector;
+
+    fn mul(self, rhs: Vector) -> Self::Output {
+        Vector {
+            tuple: self * rhs.tuple,
+        }
+    }
+}
+
+impl std::ops::Div<f64> for Vector {
+    type Output = Vector;
+
+    fn div(self, rhs: f64) -> Self::Output {
+        Vector {
+            tuple: self.tuple / rhs,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -330,5 +399,38 @@ mod tests {
     fn negate_vector() {
         let v = Vector::new(1.0, -2.0, 3.0);
         assert_eq!(-v, Vector::new(-1.0, 2.0, -3.0));
+    }
+
+    #[test]
+    fn mult_tuple_by_scalar() {
+        let a = Tuple::new(1.0, -2.0, 3.0, -4.0);
+        assert_eq!(a * 3.5, Tuple::new(3.5, -7.0, 10.5, -14.0));
+        assert_eq!(3.5 * a, Tuple::new(3.5, -7.0, 10.5, -14.0));
+    }
+
+    #[test]
+    fn mult_vector_by_scalar() {
+        let v = Vector::new(1.0, -2.0, 3.0);
+        assert_eq!(v * 3.5, Vector::new(3.5, -7.0, 10.5));
+        assert_eq!(3.5 * v, Vector::new(3.5, -7.0, 10.5));
+    }
+
+    #[test]
+    fn mult_tuple_by_fraction() {
+        let a = Tuple::new(1.0, -2.0, 3.0, -4.0);
+        assert_eq!(a * 0.5, Tuple::new(0.5, -1.0, 1.5, -2.0));
+        assert_eq!(0.5 * a, Tuple::new(0.5, -1.0, 1.5, -2.0));
+    }
+
+    #[test]
+    fn div_tuple_by_scalar() {
+        let a = Tuple::new(1.0, -2.0, 3.0, -4.0);
+        assert_eq!(a / 2.0, Tuple::new(0.5, -1.0, 1.5, -2.0));
+    }
+
+    #[test]
+    fn div_vector_by_scalar() {
+        let v = Vector::new(1.0, -2.0, 3.0);
+        assert_eq!(v / 2.0, Vector::new(0.5, -1.0, 1.5));
     }
 }
