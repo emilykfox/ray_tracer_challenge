@@ -38,6 +38,8 @@ impl From<Vector> for Tuple {
     }
 }
 
+pub struct InvalidTupleError;
+
 /// A 3-dimensional point
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct Point {
@@ -53,10 +55,15 @@ impl Point {
     }
 }
 
-impl From<Tuple> for Point {
-    fn from(value: Tuple) -> Self {
-        debug_assert!(value.is_point());
-        Point { tuple: value }
+impl TryFrom<Tuple> for Point {
+    type Error = InvalidTupleError;
+
+    fn try_from(value: Tuple) -> Result<Self, Self::Error> {
+        if !value.is_point() {
+            Err(InvalidTupleError)
+        } else {
+            Ok(Point { tuple: value })
+        }
     }
 }
 
@@ -75,10 +82,15 @@ impl Vector {
     }
 }
 
-impl From<Tuple> for Vector {
-    fn from(value: Tuple) -> Self {
-        debug_assert!(value.is_vector());
-        Vector { tuple: value }
+impl TryFrom<Tuple> for Vector {
+    type Error = InvalidTupleError;
+
+    fn try_from(value: Tuple) -> Result<Self, Self::Error> {
+        if !value.is_vector() {
+            Err(InvalidTupleError)
+        } else {
+            Ok(Vector { tuple: value })
+        }
     }
 }
 
