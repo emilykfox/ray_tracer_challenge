@@ -200,6 +200,11 @@ impl Vector {
             tuple: Tuple::new(dx, dy, dz, 0.0),
         }
     }
+
+    pub fn magnitude(&self) -> f64 {
+        let tuple = &self.tuple;
+        (tuple.x * tuple.x + tuple.y * tuple.y + tuple.z * tuple.z).sqrt()
+    }
 }
 
 impl TryFrom<Tuple> for Vector {
@@ -432,5 +437,35 @@ mod tests {
     fn div_vector_by_scalar() {
         let v = Vector::new(1.0, -2.0, 3.0);
         assert_eq!(v / 2.0, Vector::new(0.5, -1.0, 1.5));
+    }
+
+    #[test]
+    fn magnitude_x_unit() {
+        let v = Vector::new(1.0, 0.0, 0.0);
+        assert_eq!(v.magnitude(), 1.0);
+    }
+
+    #[test]
+    fn magnitude_y_unit() {
+        let v = Vector::new(0.0, 1.0, 0.0);
+        assert_eq!(v.magnitude(), 1.0);
+    }
+
+    #[test]
+    fn magnitude_z_unit() {
+        let v = Vector::new(0.0, 1.0, 0.0);
+        assert_eq!(v.magnitude(), 1.0);
+    }
+
+    #[test]
+    fn magnitude_positive() {
+        let v = Vector::new(1.0, 2.0, 3.0);
+        assert_eq!(v.magnitude(), 14.0_f64.sqrt());
+    }
+
+    #[test]
+    fn magnitude_negative() {
+        let v = Vector::new(-1.0, -2.0, -3.0);
+        assert_eq!(v.magnitude(), 14.0_f64.sqrt());
     }
 }
