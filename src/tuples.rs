@@ -26,6 +26,18 @@ impl Tuple {
     }
 }
 
+impl From<Point> for Tuple {
+    fn from(value: Point) -> Self {
+        value.tuple
+    }
+}
+
+impl From<Vector> for Tuple {
+    fn from(value: Vector) -> Self {
+        value.tuple
+    }
+}
+
 impl std::ops::Add for Tuple {
     type Output = Tuple;
 
@@ -39,15 +51,16 @@ impl std::ops::Add for Tuple {
     }
 }
 
-impl From<Point> for Tuple {
-    fn from(value: Point) -> Self {
-        value.tuple
-    }
-}
+impl std::ops::Sub for Tuple {
+    type Output = Tuple;
 
-impl From<Vector> for Tuple {
-    fn from(value: Vector) -> Self {
-        value.tuple
+    fn sub(self, rhs: Self) -> Self::Output {
+        Tuple {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
+            w: self.w - rhs.w,
+        }
     }
 }
 
@@ -86,6 +99,26 @@ impl std::ops::Add<Vector> for Point {
     fn add(self, rhs: Vector) -> Self::Output {
         Point {
             tuple: self.tuple + rhs.tuple,
+        }
+    }
+}
+
+impl std::ops::Sub for Point {
+    type Output = Vector;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Vector {
+            tuple: self.tuple - rhs.tuple,
+        }
+    }
+}
+
+impl std::ops::Sub<Vector> for Point {
+    type Output = Point;
+
+    fn sub(self, rhs: Vector) -> Self::Output {
+        Point {
+            tuple: self.tuple - rhs.tuple,
         }
     }
 }
@@ -137,6 +170,16 @@ impl std::ops::Add<Vector> for Vector {
     }
 }
 
+impl std::ops::Sub for Vector {
+    type Output = Vector;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Vector {
+            tuple: self.tuple - rhs.tuple,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -182,13 +225,41 @@ mod tests {
         let a1 = Tuple::new(3.0, -2.0, 5.0, 1.0);
         let a2 = Tuple::new(-2.0, 3.0, 1.0, 0.0);
         assert_eq!(a1 + a2, Tuple::new(1.0, 1.0, 6.0, 1.0));
-
+    }
+    #[test]
+    fn add_vector_to_point() {
         let p = Point::new(3.0, -2.0, 5.0);
+        let v = Vector::new(-2.0, 3.0, 1.0);
+
+        assert_eq!(p + v, Point::new(1.0, 1.0, 6.0));
+        assert_eq!(v + p, Point::new(1.0, 1.0, 6.0));
+    }
+
+    #[test]
+    fn add_vectors() {
         let v1 = Vector::new(3.0, -2.0, 5.0);
         let v2 = Vector::new(-2.0, 3.0, 1.0);
-
-        assert_eq!(p + v2, Point::new(1.0, 1.0, 6.0));
-        assert_eq!(v2 + p, Point::new(1.0, 1.0, 6.0));
         assert_eq!(v1 + v2, Vector::new(1.0, 1.0, 6.0));
+    }
+
+    #[test]
+    fn subtract_points() {
+        let p1 = Point::new(3.0, 2.0, 1.0);
+        let p2 = Point::new(5.0, 6.0, 7.0);
+        assert_eq!(p1 - p2, Vector::new(-2.0, -4.0, -6.0));
+    }
+
+    #[test]
+    fn subtract_vector_from_point() {
+        let p = Point::new(3.0, 2.0, 1.0);
+        let v = Vector::new(5.0, 6.0, 7.0);
+        assert_eq!(p - v, Point::new(-2.0, -4.0, -6.0));
+    }
+
+    #[test]
+    fn subtract_vectors() {
+        let v1 = Vector::new(3.0, 2.0, 1.0);
+        let v2 = Vector::new(5.0, 6.0, 7.0);
+        assert_eq!(v1 - v2, Vector::new(-2.0, -4.0, -6.0));
     }
 }
