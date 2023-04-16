@@ -155,6 +155,18 @@ impl Point {
             tuple: Tuple::new(x, y, z, 1.0),
         }
     }
+
+    pub fn x(&self) -> f64 {
+        self.tuple.x
+    }
+
+    pub fn y(&self) -> f64 {
+        self.tuple.y
+    }
+
+    pub fn z(&self) -> f64 {
+        self.tuple.z
+    }
 }
 
 impl TryFrom<Tuple> for Point {
@@ -211,6 +223,18 @@ impl Vector {
         Vector {
             tuple: Tuple::new(dx, dy, dz, 0.0),
         }
+    }
+
+    pub fn dx(&self) -> f64 {
+        self.tuple.x
+    }
+
+    pub fn dy(&self) -> f64 {
+        self.tuple.y
+    }
+
+    pub fn dz(&self) -> f64 {
+        self.tuple.z
     }
 
     pub fn magnitude(&self) -> f64 {
