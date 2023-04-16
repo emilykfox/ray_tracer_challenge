@@ -258,6 +258,7 @@ mod tests {
         let a2 = Tuple::new(-2.0, 3.0, 1.0, 0.0);
         assert_eq!(a1 + a2, Tuple::new(1.0, 1.0, 6.0, 1.0));
     }
+
     #[test]
     fn add_vector_to_point() {
         let p = Point::new(3.0, -2.0, 5.0);
