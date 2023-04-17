@@ -134,16 +134,32 @@ impl Canvas {
             self.width, self.height,
         ) + &(0..self.height)
             .map(|y| {
+                let mut line_length = 0;
                 (0..self.width)
                     .map(|x| {
                         let pixel = self.pixels[y * self.width + x];
-                        let red = ((pixel.red * 256.0) as i64).clamp(0, 255);
-                        let green = ((pixel.green * 256.0) as i64).clamp(0, 255);
-                        let blue = ((pixel.blue * 256.0) as i64).clamp(0, 255);
-                        format!("{} {} {}", red, green, blue)
+                        let colors = vec![pixel.red, pixel.green, pixel.blue];
+                        colors
+                            .into_iter()
+                            .map(|color| {
+                                // Need to manually build lines so max char length is 70
+                                let color = ((color * 256.0) as i64).clamp(0, 255).to_string();
+                                // Assumes first color isn't > 70 characters long
+                                let pad = if line_length == 0 {
+                                    line_length += color.len();
+                                    "".to_string()
+                                } else if line_length + 1 + color.len() > 70 {
+                                    line_length = color.len();
+                                    "\n".to_string()
+                                } else {
+                                    line_length += 1 + color.len();
+                                    " ".to_string()
+                                };
+                                pad + &color
+                            })
+                            .collect::<String>()
                     })
-                    .collect::<Vec<String>>()
-                    .join(" ")
+                    .collect::<String>()
             })
             .collect::<Vec<String>>()
             .join("\n")
@@ -239,17 +255,49 @@ mod tests {
         let c1 = Color::new(1.5, 0.0, 0.0);
         let c2 = Color::new(0.0, 0.5, 0.0);
         let c3 = Color::new(-0.5, 0.0, 1.0);
-        c.write_pixel(0, 0, c1);
-        c.write_pixel(2, 1, c2);
-        c.write_pixel(4, 2, c3);
+        c.write_pixel(0, 0, c1)
+            .expect("cannot write: pixel out of bounds");
+        c.write_pixel(2, 1, c2)
+            .expect("cannot write: pixel out of bounds");
+        c.write_pixel(4, 2, c3)
+            .expect("cannot write: pixel out of bounds");
         let ppm = c.to_ppm();
         assert_eq!(
-            ppm.split("\n").skip(3).take(3).collect::<Vec<&str>>(),
+            ppm.lines().skip(3).take(3).collect::<Vec<&str>>(),
             vec![
                 "255 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
                 "0 0 0 0 0 0 0 128 0 0 0 0 0 0 0",
                 "0 0 0 0 0 0 0 0 0 0 0 0 0 0 255",
             ]
         );
+    }
+
+    #[test]
+    fn ppm_split_long_lines() {
+        let mut c = Canvas::new(10, 2);
+        let color = Color::new(1.0, 0.8, 0.6);
+        for x in 0..10 {
+            for y in 0..2 {
+                c.write_pixel(x, y, color)
+                    .expect("cannot write: pixel out of bounds");
+            }
+        }
+        let ppm = c.to_ppm();
+        assert_eq!(
+            ppm.lines().skip(3).take(4).collect::<Vec<&str>>(),
+            vec![
+                "255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204",
+                "153 255 204 153 255 204 153 255 204 153 255 204 153",
+                "255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204",
+                "153 255 204 153 255 204 153 255 204 153 255 204 153",
+            ]
+        );
+    }
+
+    #[test]
+    fn ppm_ends_with_newline() {
+        let c = Canvas::new(5, 3);
+        let ppm = c.to_ppm();
+        assert!(ppm.ends_with('\n'));
     }
 }
