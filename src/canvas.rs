@@ -127,14 +127,12 @@ impl Canvas {
     }
 
     pub fn to_ppm(&self) -> String {
-        let mut ppm = format!(
+        format!(
             "P3\n\
             {} {}\n\
             255\n",
             self.width, self.height,
-        );
-
-        ppm += &(0..self.height)
+        ) + &(0..self.height)
             .map(|y| {
                 (0..self.width)
                     .map(|x| {
@@ -148,9 +146,8 @@ impl Canvas {
                     .join(" ")
             })
             .collect::<Vec<String>>()
-            .join("\n");
-        ppm += "\n";
-        ppm
+            .join("\n")
+            + "\n"
     }
 }
 
