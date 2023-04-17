@@ -125,6 +125,33 @@ impl Canvas {
             Ok(())
         }
     }
+
+    pub fn to_ppm(&self) -> String {
+        let mut ppm = format!(
+            "P3\n\
+            {} {}\n\
+            255\n",
+            self.width, self.height,
+        );
+
+        ppm += &(0..self.height)
+            .map(|y| {
+                (0..self.width)
+                    .map(|x| {
+                        let pixel = self.pixels[y * self.width + x];
+                        let red = ((pixel.red * 256.0) as i64).clamp(0, 255);
+                        let green = ((pixel.green * 256.0) as i64).clamp(0, 255);
+                        let blue = ((pixel.blue * 256.0) as i64).clamp(0, 255);
+                        format!("{} {} {}", red, green, blue)
+                    })
+                    .collect::<Vec<String>>()
+                    .join(" ")
+            })
+            .collect::<Vec<String>>()
+            .join("\n");
+        ppm += "\n";
+        ppm
+    }
 }
 
 #[cfg(test)]
@@ -196,5 +223,36 @@ mod tests {
             Err(PixelOutOfBoundsError)
         );
         assert_eq!(c.pixel_at(10, 20), Err(PixelOutOfBoundsError));
+    }
+
+    #[test]
+    fn ppm_header() {
+        let c = Canvas::new(5, 3);
+        let ppm: String = c.to_ppm();
+        assert!(ppm.starts_with(
+            "P3\n\
+            5 3\n\
+            255\n"
+        ));
+    }
+
+    #[test]
+    fn ppm_from_pixels() {
+        let mut c = Canvas::new(5, 3);
+        let c1 = Color::new(1.5, 0.0, 0.0);
+        let c2 = Color::new(0.0, 0.5, 0.0);
+        let c3 = Color::new(-0.5, 0.0, 1.0);
+        c.write_pixel(0, 0, c1);
+        c.write_pixel(2, 1, c2);
+        c.write_pixel(4, 2, c3);
+        let ppm = c.to_ppm();
+        assert_eq!(
+            ppm.split("\n").skip(3).take(3).collect::<Vec<&str>>(),
+            vec![
+                "255 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+                "0 0 0 0 0 0 0 128 0 0 0 0 0 0 0",
+                "0 0 0 0 0 0 0 0 0 0 0 0 0 0 255",
+            ]
+        );
     }
 }
