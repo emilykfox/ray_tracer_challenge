@@ -77,6 +77,39 @@ impl std::ops::Mul for Color {
     }
 }
 
+#[derive(Default, Debug, Clone, PartialEq)]
+pub struct Canvas {
+    width: usize,
+    height: usize,
+    pixels: Vec<Color>,
+}
+
+impl Canvas {
+    pub fn new(width: usize, height: usize) -> Canvas {
+        Canvas {
+            width,
+            height,
+            pixels: vec![Color::default(); width * height],
+        }
+    }
+
+    pub fn width(&self) -> usize {
+        self.width
+    }
+
+    pub fn height(&self) -> usize {
+        self.height
+    }
+
+    pub fn pixel_at(&self, x: usize, y: usize) -> Option<Color> {
+        if x >= self.width || y >= self.height {
+            None
+        } else {
+            Some(self.pixels[y * self.width + x])
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -115,5 +148,17 @@ mod tests {
         let c1 = Color::new(1.0, 0.2, 0.4);
         let c2 = Color::new(0.9, 1.0, 0.1);
         assert_eq!(c1 * c2, Color::new(0.9, 0.2, 0.04));
+    }
+
+    #[test]
+    fn create_canvas() {
+        let c = Canvas::new(10, 20);
+        assert_eq!(c.width(), 10);
+        assert_eq!(c.height(), 20);
+        for i in 0..10 {
+            for j in 0..20 {
+                assert_eq!(c.pixel_at(i, j), Some(Color::new(0.0, 0.0, 0.0)));
+            }
+        }
     }
 }
