@@ -84,6 +84,9 @@ pub struct Canvas {
     pixels: Vec<Color>,
 }
 
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
+pub struct PixelOutOfBoundsError;
+
 impl Canvas {
     pub fn new(width: usize, height: usize) -> Canvas {
         Canvas {
@@ -101,11 +104,25 @@ impl Canvas {
         self.height
     }
 
-    pub fn pixel_at(&self, x: usize, y: usize) -> Option<Color> {
+    pub fn pixel_at(&self, x: usize, y: usize) -> Result<Color, PixelOutOfBoundsError> {
         if x >= self.width || y >= self.height {
-            None
+            Err(PixelOutOfBoundsError)
         } else {
-            Some(self.pixels[y * self.width + x])
+            Ok(self.pixels[y * self.width + x])
+        }
+    }
+
+    pub fn write_pixel(
+        &mut self,
+        x: usize,
+        y: usize,
+        color: Color,
+    ) -> Result<(), PixelOutOfBoundsError> {
+        if x >= self.width || y >= self.height {
+            Err(PixelOutOfBoundsError)
+        } else {
+            self.pixels[y * self.width + x] = color;
+            Ok(())
         }
     }
 }
@@ -157,8 +174,27 @@ mod tests {
         assert_eq!(c.height(), 20);
         for i in 0..10 {
             for j in 0..20 {
-                assert_eq!(c.pixel_at(i, j), Some(Color::new(0.0, 0.0, 0.0)));
+                assert_eq!(c.pixel_at(i, j), Ok(Color::new(0.0, 0.0, 0.0)));
             }
         }
+    }
+
+    #[test]
+    fn write_pixel() {
+        let mut c = Canvas::new(10, 20);
+        let red = Color::new(1.0, 0.0, 0.0);
+        c.write_pixel(2, 3, red)
+            .expect("cannot write: pixel out of bounds");
+        assert_eq!(c.pixel_at(2, 3), Ok(red));
+    }
+
+    #[test]
+    fn out_of_bounds() {
+        let mut c = Canvas::new(10, 20);
+        assert_eq!(
+            c.write_pixel(10, 20, Color::default()),
+            Err(PixelOutOfBoundsError)
+        );
+        assert_eq!(c.pixel_at(10, 20), Err(PixelOutOfBoundsError));
     }
 }
