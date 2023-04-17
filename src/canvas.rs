@@ -65,6 +65,18 @@ impl std::ops::Mul<Color> for f64 {
     }
 }
 
+impl std::ops::Mul for Color {
+    type Output = Color;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Color {
+            red: self.red * rhs.red,
+            green: self.green * rhs.green,
+            blue: self.blue * rhs.blue,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -96,5 +108,12 @@ mod tests {
         let c = Color::new(0.2, 0.3, 0.4);
         assert_eq!(c * 2.0, Color::new(0.4, 0.6, 0.8));
         assert_eq!(2.0 * c, Color::new(0.4, 0.6, 0.8));
+    }
+
+    #[test]
+    fn multiply_colors() {
+        let c1 = Color::new(1.0, 0.2, 0.4);
+        let c2 = Color::new(0.9, 1.0, 0.1);
+        assert_eq!(c1 * c2, Color::new(0.9, 0.2, 0.04));
     }
 }
