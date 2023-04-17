@@ -2,9 +2,9 @@ const EQUALITY_EPSILON: f64 = 0.00001;
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct Color {
-    pub red: f64,
-    pub green: f64,
-    pub blue: f64,
+    red: f64,
+    green: f64,
+    blue: f64,
 }
 
 impl Color {

@@ -5,10 +5,10 @@ const EQUALITY_EPSILON: f64 = 0.00001;
 /// from `Point` and `Vector`
 #[derive(Debug, Default, Copy, Clone)]
 pub struct Tuple {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
-    pub w: f64,
+    x: f64,
+    y: f64,
+    z: f64,
+    w: f64,
 }
 
 impl Tuple {
