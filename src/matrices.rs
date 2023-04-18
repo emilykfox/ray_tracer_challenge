@@ -1,3 +1,5 @@
+use crate::tuples::Tuple;
+
 const EQUALITY_EPSILON: f64 = 0.00001;
 
 #[derive(Debug, Copy, Clone)]
@@ -68,6 +70,25 @@ impl<const M: usize, const N: usize, const O: usize> std::ops::Mul<RawMatrix<N, 
     }
 }
 
+impl From<Tuple> for RawMatrix<4, 1> {
+    fn from(value: Tuple) -> Self {
+        RawMatrix {
+            entries: [[value.x], [value.y], [value.z], [value.w]],
+        }
+    }
+}
+
+impl From<RawMatrix<4, 1>> for Tuple {
+    fn from(value: RawMatrix<4, 1>) -> Self {
+        Tuple {
+            x: value.entries[0][0],
+            y: value.entries[1][0],
+            z: value.entries[2][0],
+            w: value.entries[3][0],
+        }
+    }
+}
+
 #[derive(Default, Debug, Copy, Clone, PartialEq)]
 pub struct Matrix {
     raw: RawMatrix<4, 4>,
@@ -99,8 +120,18 @@ impl std::ops::Mul for Matrix {
     }
 }
 
+impl std::ops::Mul<Tuple> for Matrix {
+    type Output = Tuple;
+
+    fn mul(self, rhs: Tuple) -> Self::Output {
+        Tuple::from(self.raw * RawMatrix::from(rhs))
+    }
+}
+
 #[cfg(test)]
 mod test {
+    use crate::tuples::Tuple;
+
     use super::*;
 
     #[test]
@@ -211,5 +242,17 @@ mod test {
             [16.0, 26.0, 46.0, 42.0],
         ]);
         assert_eq!(a * b, product);
+    }
+
+    #[test]
+    fn matrix_multiply_tuple() {
+        let a = Matrix::new([
+            [1.0, 2.0, 3.0, 4.0],
+            [2.0, 4.0, 4.0, 2.0],
+            [8.0, 6.0, 4.0, 1.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]);
+        let b = Tuple::new(1.0, 2.0, 3.0, 1.0);
+        assert_eq!(a * b, Tuple::new(18.0, 24.0, 33.0, 1.0));
     }
 }
