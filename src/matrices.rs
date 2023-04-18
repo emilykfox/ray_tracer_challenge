@@ -1,5 +1,11 @@
 use crate::{tuples::Tuple, Point, Vector};
 
+pub const IDENTITY: Matrix = Matrix::new([
+    [1.0, 0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0, 0.0],
+    [0.0, 0.0, 1.0, 0.0],
+    [0.0, 0.0, 0.0, 1.0],
+]);
 const EQUALITY_EPSILON: f64 = 0.00001;
 
 #[derive(Debug, Copy, Clone)]
@@ -8,7 +14,7 @@ struct RawMatrix<const M: usize, const N: usize> {
 }
 
 impl<const M: usize, const N: usize> RawMatrix<M, N> {
-    pub fn new(entries: [[f64; N]; M]) -> Self {
+    pub const fn new(entries: [[f64; N]; M]) -> Self {
         RawMatrix { entries }
     }
 }
@@ -95,7 +101,7 @@ pub struct Matrix {
 }
 
 impl Matrix {
-    pub fn new(entries: [[f64; 4]; 4]) -> Matrix {
+    pub const fn new(entries: [[f64; 4]; 4]) -> Matrix {
         Matrix {
             raw: RawMatrix::new(entries),
         }
@@ -313,5 +319,22 @@ mod test {
         let v = Vector::new(1.0, 2.0, 3.0);
         assert_eq!(a * p, Err(CastingMatrixError {}));
         assert_eq!(a * v, Err(CastingMatrixError {}));
+    }
+
+    #[test]
+    fn matrix_times_identity() {
+        let a = Matrix::new([
+            [0.0, 1.0, 2.0, 4.0],
+            [1.0, 2.0, 4.0, 8.0],
+            [2.0, 4.0, 8.0, 16.0],
+            [4.0, 8.0, 16.0, 32.0],
+        ]);
+        assert_eq!(a * IDENTITY, a);
+    }
+
+    #[test]
+    fn identity_times_tuple() {
+        let a = Tuple::new(1.0, 2.0, 3.0, 4.0);
+        assert_eq!(IDENTITY * a, a);
     }
 }
