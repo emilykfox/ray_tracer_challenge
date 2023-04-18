@@ -11,13 +11,19 @@ impl<const M: usize, const N: usize> RawMatrix<M, N> {
     }
 }
 
-impl<const N: usize> Default for RawMatrix<N, N> {
+impl<const M: usize, const N: usize> Default for RawMatrix<M, N> {
     fn default() -> Self {
+        /*
+        TODO: Use this code for identity matrix.
         let mut entries = [[0.0; N]; N];
         for (i, entry) in entries.iter_mut().enumerate() {
             entry[i] = 1.0;
         }
         RawMatrix { entries }
+        */
+        RawMatrix {
+            entries: [[0.0; N]; M],
+        }
     }
 }
 
@@ -141,4 +147,20 @@ mod test {
         ]);
         assert_ne!(a, b);
     }
+
+    /*
+    TODO: Default should be all 0's.
+    Save some code for identity matrix.
+    #[test]
+    fn matrix_default() {
+        let m = Matrix::default();
+        let i = Matrix::new([
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]);
+        assert_eq!(m, i);
+    }
+    */
 }
