@@ -1,4 +1,4 @@
-use crate::tuples::Tuple;
+use crate::{tuples::Tuple, Point};
 
 const EQUALITY_EPSILON: f64 = 0.00001;
 
@@ -128,6 +128,18 @@ impl std::ops::Mul<Tuple> for Matrix {
     }
 }
 
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
+pub struct CastingMatrixError {}
+
+/// Will return `Err(CastingMatrixError)`` if enclosed `Tuple` cannot be converted to a `Point`
+impl std::ops::Mul<Point> for Matrix {
+    type Output = Result<Point, CastingMatrixError>;
+
+    fn mul(self, rhs: Point) -> Self::Output {
+        Point::try_from(self * Tuple::from(rhs)).map_err(|_| CastingMatrixError {})
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::tuples::Tuple;
@@ -254,5 +266,17 @@ mod test {
         ]);
         let b = Tuple::new(1.0, 2.0, 3.0, 1.0);
         assert_eq!(a * b, Tuple::new(18.0, 24.0, 33.0, 1.0));
+    }
+
+    #[test]
+    fn matrix_multiply_point() {
+        let a = Matrix::new([
+            [1.0, 2.0, 3.0, 4.0],
+            [2.0, 4.0, 4.0, 2.0],
+            [8.0, 6.0, 4.0, 1.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]);
+        let p = Point::new(1.0, 2.0, 3.0);
+        assert_eq!(a * p, Ok(Point::new(18.0, 24.0, 33.0)));
     }
 }
