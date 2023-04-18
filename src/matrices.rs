@@ -1,4 +1,4 @@
-use crate::{tuples::Tuple, Point};
+use crate::{tuples::Tuple, Point, Vector};
 
 const EQUALITY_EPSILON: f64 = 0.00001;
 
@@ -140,6 +140,15 @@ impl std::ops::Mul<Point> for Matrix {
     }
 }
 
+/// Will return `Err(CastingMatrixError)`` if enclosed `Tuple` cannot be converted to a `Vector`
+impl std::ops::Mul<Vector> for Matrix {
+    type Output = Result<Vector, CastingMatrixError>;
+
+    fn mul(self, rhs: Vector) -> Self::Output {
+        Vector::try_from(self * Tuple::from(rhs)).map_err(|_| CastingMatrixError {})
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::tuples::Tuple;
@@ -278,5 +287,31 @@ mod test {
         ]);
         let p = Point::new(1.0, 2.0, 3.0);
         assert_eq!(a * p, Ok(Point::new(18.0, 24.0, 33.0)));
+    }
+
+    #[test]
+    fn matrix_multiply_vertex() {
+        let a = Matrix::new([
+            [1.0, 2.0, 3.0, 4.0],
+            [2.0, 4.0, 4.0, 2.0],
+            [8.0, 6.0, 4.0, 1.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]);
+        let v = Vector::new(1.0, 2.0, 3.0);
+        assert_eq!(a * v, Ok(Vector::new(14.0, 22.0, 32.0)));
+    }
+
+    #[test]
+    fn matrix_multiply_error() {
+        let a = Matrix::new([
+            [1.0, 2.0, 3.0, 4.0],
+            [2.0, 4.0, 4.0, 2.0],
+            [8.0, 6.0, 4.0, 1.0],
+            [0.0, 2.0, 0.0, 1.0],
+        ]);
+        let p = Point::new(1.0, 2.0, 3.0);
+        let v = Vector::new(1.0, 2.0, 3.0);
+        assert_eq!(a * p, Err(CastingMatrixError {}));
+        assert_eq!(a * v, Err(CastingMatrixError {}));
     }
 }
