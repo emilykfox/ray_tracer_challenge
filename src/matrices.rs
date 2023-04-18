@@ -1,11 +1,15 @@
 use crate::{tuples::Tuple, Point, Vector};
 
-pub const IDENTITY: Matrix = Matrix::new([
-    [1.0, 0.0, 0.0, 0.0],
-    [0.0, 1.0, 0.0, 0.0],
-    [0.0, 0.0, 1.0, 0.0],
-    [0.0, 0.0, 0.0, 1.0],
-]);
+pub const IDENTITY: Matrix = Matrix {
+    raw: RawMatrix {
+        entries: [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ],
+    },
+};
 const EQUALITY_EPSILON: f64 = 0.00001;
 
 #[derive(Debug, Copy, Clone)]
@@ -14,7 +18,17 @@ struct RawMatrix<const M: usize, const N: usize> {
 }
 
 impl<const M: usize, const N: usize> RawMatrix<M, N> {
-    pub const fn new(entries: [[f64; N]; M]) -> Self {
+    pub fn new(entries: [[f64; N]; M]) -> Self {
+        RawMatrix { entries }
+    }
+
+    pub fn transpose(&self) -> RawMatrix<N, M> {
+        let mut entries = [[0.0; M]; N];
+        for (i, row) in self.entries.iter().enumerate() {
+            for (j, entry) in row.iter().enumerate() {
+                entries[j][i] = *entry;
+            }
+        }
         RawMatrix { entries }
     }
 }
@@ -22,7 +36,7 @@ impl<const M: usize, const N: usize> RawMatrix<M, N> {
 impl<const M: usize, const N: usize> Default for RawMatrix<M, N> {
     fn default() -> Self {
         /*
-        TODO: Use this code for identity matrix.
+        TODO?: Use this code for identity matrix.
         let mut entries = [[0.0; N]; N];
         for (i, entry) in entries.iter_mut().enumerate() {
             entry[i] = 1.0;
@@ -101,9 +115,15 @@ pub struct Matrix {
 }
 
 impl Matrix {
-    pub const fn new(entries: [[f64; 4]; 4]) -> Matrix {
+    pub fn new(entries: [[f64; 4]; 4]) -> Matrix {
         Matrix {
             raw: RawMatrix::new(entries),
+        }
+    }
+
+    pub fn transpose(&self) -> Matrix {
+        Matrix {
+            raw: self.raw.transpose(),
         }
     }
 }
@@ -336,5 +356,29 @@ mod test {
     fn identity_times_tuple() {
         let a = Tuple::new(1.0, 2.0, 3.0, 4.0);
         assert_eq!(IDENTITY * a, a);
+    }
+
+    #[test]
+    fn transpose() {
+        let a = Matrix::new([
+            [0.0, 9.0, 3.0, 0.0],
+            [9.0, 8.0, 0.0, 8.0],
+            [1.0, 8.0, 5.0, 3.0],
+            [0.0, 0.0, 5.0, 8.0],
+        ]);
+        assert_eq!(
+            a.transpose(),
+            Matrix::new([
+                [0.0, 9.0, 1.0, 0.0],
+                [9.0, 8.0, 8.0, 0.0],
+                [3.0, 0.0, 5.0, 5.0],
+                [0.0, 8.0, 3.0, 8.0],
+            ])
+        );
+    }
+
+    #[test]
+    fn transpose_identity() {
+        assert_eq!(IDENTITY.transpose(), IDENTITY);
     }
 }
