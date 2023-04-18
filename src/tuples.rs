@@ -4,16 +4,16 @@ const EQUALITY_EPSILON: f64 = 0.00001;
 /// You generally won't construct these directly but instead by casting
 /// from `Point` and `Vector`
 #[derive(Debug, Default, Copy, Clone)]
-pub struct Tuple {
-    x: f64,
-    y: f64,
-    z: f64,
-    w: f64,
+pub(crate) struct Tuple {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub w: f64,
 }
 
 impl Tuple {
     /// Returns a new `Tuple`
-    fn new(x: f64, y: f64, z: f64, w: f64) -> Self {
+    pub fn new(x: f64, y: f64, z: f64, w: f64) -> Self {
         Tuple { x, y, z, w }
     }
 
