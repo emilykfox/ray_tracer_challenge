@@ -52,6 +52,22 @@ impl<const M: usize, const N: usize> std::ops::Index<[usize; 2]> for RawMatrix<M
     }
 }
 
+impl<const M: usize, const N: usize, const O: usize> std::ops::Mul<RawMatrix<N, O>>
+    for RawMatrix<M, N>
+{
+    type Output = RawMatrix<M, O>;
+
+    fn mul(self, rhs: RawMatrix<N, O>) -> Self::Output {
+        let mut entries = [[0.0; O]; M];
+        for (i, row) in entries.iter_mut().enumerate() {
+            for (j, entry) in row.iter_mut().enumerate() {
+                *entry = (0..N).map(|k| self.entries[i][k] * rhs.entries[k][j]).sum()
+            }
+        }
+        RawMatrix { entries }
+    }
+}
+
 #[derive(Default, Debug, Copy, Clone, PartialEq)]
 pub struct Matrix {
     raw: RawMatrix<4, 4>,
@@ -70,6 +86,16 @@ impl std::ops::Index<[usize; 2]> for Matrix {
 
     fn index(&self, index: [usize; 2]) -> &Self::Output {
         &self.raw[index]
+    }
+}
+
+impl std::ops::Mul for Matrix {
+    type Output = Matrix;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Matrix {
+            raw: self.raw * rhs.raw,
+        }
     }
 }
 
@@ -163,4 +189,27 @@ mod test {
         assert_eq!(m, i);
     }
     */
+
+    #[test]
+    fn matrix_multiplication() {
+        let a = Matrix::new([
+            [1.0, 2.0, 3.0, 4.0],
+            [5.0, 6.0, 7.0, 8.0],
+            [9.0, 8.0, 7.0, 6.0],
+            [5.0, 4.0, 3.0, 2.0],
+        ]);
+        let b = Matrix::new([
+            [-2.0, 1.0, 2.0, 3.0],
+            [3.0, 2.0, 1.0, -1.0],
+            [4.0, 3.0, 6.0, 5.0],
+            [1.0, 2.0, 7.0, 8.0],
+        ]);
+        let product = Matrix::new([
+            [20.0, 22.0, 50.0, 48.0],
+            [44.0, 54.0, 114.0, 108.0],
+            [40.0, 58.0, 110.0, 102.0],
+            [16.0, 26.0, 46.0, 42.0],
+        ]);
+        assert_eq!(a * b, product);
+    }
 }
