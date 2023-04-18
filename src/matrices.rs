@@ -1,10 +1,30 @@
+struct RawMatrix<const M: usize, const N: usize> {
+    entries: [[f64; N]; M],
+}
+
+impl<const M: usize, const N: usize> RawMatrix<M, N> {
+    pub fn new(entries: [[f64; N]; M]) -> Self {
+        RawMatrix { entries }
+    }
+}
+
+impl<const M: usize, const N: usize> std::ops::Index<[usize; 2]> for RawMatrix<M, N> {
+    type Output = f64;
+
+    fn index(&self, index: [usize; 2]) -> &Self::Output {
+        &self.entries[index[0]][index[1]]
+    }
+}
+
 pub struct Matrix {
-    entries: [[f64; 4]; 4],
+    raw: RawMatrix<4, 4>,
 }
 
 impl Matrix {
     pub fn new(entries: [[f64; 4]; 4]) -> Matrix {
-        Matrix { entries }
+        Matrix {
+            raw: RawMatrix::new(entries),
+        }
     }
 }
 
@@ -12,7 +32,7 @@ impl std::ops::Index<[usize; 2]> for Matrix {
     type Output = f64;
 
     fn index(&self, index: [usize; 2]) -> &Self::Output {
-        &self.entries[index[0]][index[1]]
+        &self.raw[index]
     }
 }
 
