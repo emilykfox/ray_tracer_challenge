@@ -57,4 +57,23 @@ mod test {
         assert_eq!(m[[3, 0]], 13.5);
         assert_eq!(m[[3, 2]], 15.5);
     }
+
+    #[test]
+    fn construct_2x2() {
+        let m = RawMatrix::new([[-3.0, 5.0], [1.0, -2.0]]);
+
+        assert_eq!(m[[0, 0]], -3.0);
+        assert_eq!(m[[0, 1]], 5.0);
+        assert_eq!(m[[1, 0]], 1.0);
+        assert_eq!(m[[1, 1]], -2.0);
+    }
+
+    #[test]
+    fn construct_3x3() {
+        let m = RawMatrix::new([[-3.0, 5.0, 0.0], [1.0, -2.0, -7.0], [0.0, 1.0, 1.0]]);
+
+        assert_eq!(m[[0, 0]], -3.0);
+        assert_eq!(m[[1, 1]], -2.0);
+        assert_eq!(m[[2, 2]], 1.0);
+    }
 }
