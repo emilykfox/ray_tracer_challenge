@@ -235,6 +235,22 @@ impl Matrix {
     fn submatrix(&self, i: usize, j: usize) -> Result<RawMatrix<3, 3>, MatrixIndexError> {
         self.raw.submatrix(i, j)
     }
+
+    fn minor(&self, i: usize, j: usize) -> Result<f64, MatrixIndexError> {
+        self.raw.minor(i, j)
+    }
+
+    fn cofactor(&self, i: usize, j: usize) -> Result<f64, MatrixIndexError> {
+        self.raw.cofactor(i, j)
+    }
+
+    pub fn determinant(&self) -> f64 {
+        self.raw.determinant()
+    }
+
+    pub fn invertible(&self) -> bool {
+        self.determinant() != 0.0
+    }
 }
 
 impl std::ops::Index<[usize; 2]> for Matrix {
@@ -552,7 +568,7 @@ mod test {
 
     #[test]
     fn determinant_of_4x4() {
-        let a = RawMatrix::new([
+        let a = Matrix::new([
             [-2.0, -8.0, 3.0, 5.0],
             [-3.0, 1.0, 7.0, 3.0],
             [1.0, 2.0, -9.0, 6.0],
@@ -563,5 +579,29 @@ mod test {
         assert_eq!(a.cofactor(0, 2), Ok(210.0));
         assert_eq!(a.cofactor(0, 3), Ok(51.0));
         assert_eq!(a.determinant(), -4071.0);
+    }
+
+    #[test]
+    fn invertible() {
+        let a = Matrix::new([
+            [6.0, 4.0, 4.0, 4.0],
+            [5.0, 5.0, 7.0, 6.0],
+            [4.0, -9.0, 3.0, -7.0],
+            [9.0, 1.0, 7.0, -6.0],
+        ]);
+        assert_eq!(a.determinant(), -2120.0);
+        assert!(a.invertible());
+    }
+
+    #[test]
+    fn not_invertible() {
+        let a = Matrix::new([
+            [-4.0, 2.0, -2.0, -3.0],
+            [9.0, 6.0, 2.0, 6.0],
+            [0.0, -5.0, 1.0, -5.0],
+            [0.0, 0.0, 0.0, 0.0],
+        ]);
+        assert_eq!(a.determinant(), 0.0);
+        assert!(!a.invertible());
     }
 }
