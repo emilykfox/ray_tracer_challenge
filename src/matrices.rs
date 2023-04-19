@@ -71,6 +71,15 @@ impl RawMatrix<3, 3> {
     pub fn minor(&self, i: usize, j: usize) -> Result<f64, MatrixIndexError> {
         Ok(self.submatrix(i, j)?.determinant())
     }
+
+    pub fn cofactor(&self, i: usize, j: usize) -> Result<f64, MatrixIndexError> {
+        let minor = self.minor(i, j)?;
+        if (i + j) % 2 == 0 {
+            Ok(minor)
+        } else {
+            Ok(-minor)
+        }
+    }
 }
 
 impl RawMatrix<4, 4> {
@@ -492,5 +501,14 @@ mod test {
         let b = a.submatrix(1, 0).expect("matrix index error");
         assert_eq!(b.determinant(), 25.0);
         assert_eq!(a.minor(1, 0), Ok(25.0));
+    }
+
+    #[test]
+    fn cofactor_of_3x3() {
+        let a = RawMatrix::new([[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]]);
+        assert_eq!(a.minor(0, 0), Ok(-12.0));
+        assert_eq!(a.cofactor(0, 0), Ok(-12.0));
+        assert_eq!(a.minor(1, 0), Ok(25.0));
+        assert_eq!(a.cofactor(1, 0), Ok(-25.0));
     }
 }
