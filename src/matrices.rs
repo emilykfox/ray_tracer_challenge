@@ -67,6 +67,10 @@ impl RawMatrix<3, 3> {
             Ok(RawMatrix { entries })
         }
     }
+
+    pub fn minor(&self, i: usize, j: usize) -> Result<f64, MatrixIndexError> {
+        Ok(self.submatrix(i, j)?.determinant())
+    }
 }
 
 impl RawMatrix<4, 4> {
@@ -480,5 +484,13 @@ mod test {
                 [-7.0, -1.0, 1.0],
             ]))
         );
+    }
+
+    #[test]
+    fn minor_of_3x3() {
+        let a = RawMatrix::new([[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]]);
+        let b = a.submatrix(1, 0).expect("matrix index error");
+        assert_eq!(b.determinant(), 25.0);
+        assert_eq!(a.minor(1, 0), Ok(25.0));
     }
 }
