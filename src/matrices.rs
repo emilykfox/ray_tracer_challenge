@@ -80,6 +80,14 @@ impl RawMatrix<3, 3> {
             Ok(-minor)
         }
     }
+
+    pub fn determinant(&self) -> f64 {
+        self.entries[0]
+            .iter()
+            .enumerate()
+            .map(|(j, entry)| entry * self.cofactor(0, j).expect("matrix index error"))
+            .sum()
+    }
 }
 
 impl RawMatrix<4, 4> {
@@ -106,6 +114,27 @@ impl RawMatrix<4, 4> {
             }
             Ok(RawMatrix { entries })
         }
+    }
+
+    pub fn minor(&self, i: usize, j: usize) -> Result<f64, MatrixIndexError> {
+        Ok(self.submatrix(i, j)?.determinant())
+    }
+
+    pub fn cofactor(&self, i: usize, j: usize) -> Result<f64, MatrixIndexError> {
+        let minor = self.minor(i, j)?;
+        if (i + j) % 2 == 0 {
+            Ok(minor)
+        } else {
+            Ok(-minor)
+        }
+    }
+
+    pub fn determinant(&self) -> f64 {
+        self.entries[0]
+            .iter()
+            .enumerate()
+            .map(|(j, entry)| entry * self.cofactor(0, j).expect("matrix index error"))
+            .sum()
     }
 }
 
@@ -510,5 +539,29 @@ mod test {
         assert_eq!(a.cofactor(0, 0), Ok(-12.0));
         assert_eq!(a.minor(1, 0), Ok(25.0));
         assert_eq!(a.cofactor(1, 0), Ok(-25.0));
+    }
+
+    #[test]
+    fn determinant_of_3x3() {
+        let a = RawMatrix::new([[1.0, 2.0, 6.0], [-5.0, 8.0, -4.0], [2.0, 6.0, 4.0]]);
+        assert_eq!(a.cofactor(0, 0), Ok(56.0));
+        assert_eq!(a.cofactor(0, 1), Ok(12.0));
+        assert_eq!(a.cofactor(0, 2), Ok(-46.0));
+        assert_eq!(a.determinant(), -196.0);
+    }
+
+    #[test]
+    fn determinant_of_4x4() {
+        let a = RawMatrix::new([
+            [-2.0, -8.0, 3.0, 5.0],
+            [-3.0, 1.0, 7.0, 3.0],
+            [1.0, 2.0, -9.0, 6.0],
+            [-6.0, 7.0, 7.0, -9.0],
+        ]);
+        assert_eq!(a.cofactor(0, 0), Ok(690.0));
+        assert_eq!(a.cofactor(0, 1), Ok(447.0));
+        assert_eq!(a.cofactor(0, 2), Ok(210.0));
+        assert_eq!(a.cofactor(0, 3), Ok(51.0));
+        assert_eq!(a.determinant(), -4071.0);
     }
 }
