@@ -69,6 +69,33 @@ impl RawMatrix<3, 3> {
     }
 }
 
+impl RawMatrix<4, 4> {
+    pub fn submatrix(&self, i: usize, j: usize) -> Result<RawMatrix<3, 3>, MatrixIndexError> {
+        if i > 3 || j > 3 {
+            Err(MatrixIndexError)
+        } else {
+            let mut entries = [[0.0; 3]; 3];
+            for (k, row) in self
+                .entries
+                .iter()
+                .enumerate()
+                .filter_map(|(k, row)| if k != i { Some(row) } else { None })
+                .enumerate()
+            {
+                for (l, entry) in row
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(l, entry)| if l != j { Some(entry) } else { None })
+                    .enumerate()
+                {
+                    entries[k][l] = *entry;
+                }
+            }
+            Ok(RawMatrix { entries })
+        }
+    }
+}
+
 impl<const M: usize, const N: usize> Default for RawMatrix<M, N> {
     fn default() -> Self {
         /*
@@ -164,7 +191,7 @@ impl Matrix {
     }
 
     fn submatrix(&self, i: usize, j: usize) -> Result<RawMatrix<3, 3>, MatrixIndexError> {
-        todo!();
+        self.raw.submatrix(i, j)
     }
 }
 
