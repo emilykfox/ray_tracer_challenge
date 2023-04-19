@@ -12,6 +12,7 @@ pub const IDENTITY: Matrix = Matrix {
 };
 const EQUALITY_EPSILON: f64 = 0.00001;
 
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
 struct MatrixIndexError;
 
 #[derive(Debug, Copy, Clone)]
@@ -38,6 +39,33 @@ impl<const M: usize, const N: usize> RawMatrix<M, N> {
 impl RawMatrix<2, 2> {
     pub fn determinant(&self) -> f64 {
         self.entries[0][0] * self.entries[1][1] - self.entries[0][1] * self.entries[1][0]
+    }
+}
+
+impl RawMatrix<3, 3> {
+    pub fn submatrix(&self, i: usize, j: usize) -> Result<RawMatrix<2, 2>, MatrixIndexError> {
+        if i > 2 || j > 2 {
+            Err(MatrixIndexError)
+        } else {
+            let mut entries = [[0.0; 2]; 2];
+            for (k, row) in self
+                .entries
+                .iter()
+                .enumerate()
+                .filter_map(|(k, row)| if k != i { Some(row) } else { None })
+                .enumerate()
+            {
+                for (l, entry) in row
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(l, entry)| if l != j { Some(entry) } else { None })
+                    .enumerate()
+                {
+                    entries[k][l] = *entry;
+                }
+            }
+            Ok(RawMatrix { entries })
+        }
     }
 }
 
@@ -133,6 +161,10 @@ impl Matrix {
         Matrix {
             raw: self.raw.transpose(),
         }
+    }
+
+    fn submatrix(&self, i: usize, j: usize) -> Result<RawMatrix<3, 3>, MatrixIndexError> {
+        todo!();
     }
 }
 
