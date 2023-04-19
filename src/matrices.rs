@@ -12,6 +12,8 @@ pub const IDENTITY: Matrix = Matrix {
 };
 const EQUALITY_EPSILON: f64 = 0.00001;
 
+struct MatrixIndexError;
+
 #[derive(Debug, Copy, Clone)]
 struct RawMatrix<const M: usize, const N: usize> {
     entries: [[f64; N]; M],
@@ -161,14 +163,14 @@ impl std::ops::Mul<Tuple> for Matrix {
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
-pub struct CastingMatrixError {}
+pub struct CastingMatrixError;
 
 /// Will return `Err(CastingMatrixError)`` if enclosed `Tuple` cannot be converted to a `Point`
 impl std::ops::Mul<Point> for Matrix {
     type Output = Result<Point, CastingMatrixError>;
 
     fn mul(self, rhs: Point) -> Self::Output {
-        Point::try_from(self * Tuple::from(rhs)).map_err(|_| CastingMatrixError {})
+        Point::try_from(self * Tuple::from(rhs)).map_err(|_| CastingMatrixError)
     }
 }
 
@@ -177,7 +179,7 @@ impl std::ops::Mul<Vector> for Matrix {
     type Output = Result<Vector, CastingMatrixError>;
 
     fn mul(self, rhs: Vector) -> Self::Output {
-        Vector::try_from(self * Tuple::from(rhs)).map_err(|_| CastingMatrixError {})
+        Vector::try_from(self * Tuple::from(rhs)).map_err(|_| CastingMatrixError)
     }
 }
 
@@ -343,8 +345,8 @@ mod test {
         ]);
         let p = Point::new(1.0, 2.0, 3.0);
         let v = Vector::new(1.0, 2.0, 3.0);
-        assert_eq!(a * p, Err(CastingMatrixError {}));
-        assert_eq!(a * v, Err(CastingMatrixError {}));
+        assert_eq!(a * p, Err(CastingMatrixError));
+        assert_eq!(a * v, Err(CastingMatrixError));
     }
 
     #[test]
@@ -392,5 +394,32 @@ mod test {
     fn determinant_of_2x2() {
         let a = RawMatrix::new([[1.0, 5.0], [-3.0, 2.0]]);
         assert_eq!(a.determinant(), 17.0);
+    }
+
+    #[test]
+    fn submatrix_of_3x3() {
+        let a = RawMatrix::new([[1.0, 5.0, 0.0], [-3.0, 2.0, 7.0], [0.0, 6.0, -3.0]]);
+        assert_eq!(
+            a.submatrix(0, 2),
+            Ok(RawMatrix::new([[-3.0, 2.0], [0.0, 6.0],]))
+        );
+    }
+
+    #[test]
+    fn submatrix_of_4x4() {
+        let a = Matrix::new([
+            [-6.0, 1.0, 1.0, 6.0],
+            [-8.0, 5.0, 8.0, 6.0],
+            [-1.0, 0.0, 8.0, 2.0],
+            [-7.0, 1.0, -1.0, 1.0],
+        ]);
+        assert_eq!(
+            a.submatrix(2, 1),
+            Ok(RawMatrix::new([
+                [-6.0, 1.0, 6.0],
+                [-8.0, 8.0, 6.0],
+                [-7.0, -1.0, 1.0],
+            ]))
+        );
     }
 }
