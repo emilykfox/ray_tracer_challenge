@@ -33,6 +33,12 @@ impl<const M: usize, const N: usize> RawMatrix<M, N> {
     }
 }
 
+impl RawMatrix<2, 2> {
+    pub fn determinant(&self) -> f64 {
+        self.entries[0][0] * self.entries[1][1] - self.entries[0][1] * self.entries[1][0]
+    }
+}
+
 impl<const M: usize, const N: usize> Default for RawMatrix<M, N> {
     fn default() -> Self {
         /*
@@ -380,5 +386,11 @@ mod test {
     #[test]
     fn transpose_identity() {
         assert_eq!(IDENTITY.transpose(), IDENTITY);
+    }
+
+    #[test]
+    fn determinant_of_2x2() {
+        let a = RawMatrix::new([[1.0, 5.0], [-3.0, 2.0]]);
+        assert_eq!(a.determinant(), 17.0);
     }
 }
