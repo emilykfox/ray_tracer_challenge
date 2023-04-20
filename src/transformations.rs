@@ -18,8 +18,37 @@ pub fn scaling(x: f64, y: f64, z: f64) -> Matrix {
     ])
 }
 
+pub fn rotation_x(r: f64) -> Matrix {
+    Matrix::new([
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, r.cos(), -r.sin(), 0.0],
+        [0.0, r.sin(), r.cos(), 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ])
+}
+
+pub fn rotation_y(r: f64) -> Matrix {
+    Matrix::new([
+        [r.cos(), 0.0, r.sin(), 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [-r.sin(), 0.0, r.cos(), 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ])
+}
+
+pub fn rotation_z(r: f64) -> Matrix {
+    Matrix::new([
+        [r.cos(), -r.sin(), 0.0, 0.0],
+        [r.sin(), r.cos(), 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ])
+}
+
 #[cfg(test)]
 mod test {
+    use std::f64::consts::PI;
+
     use super::*;
     use crate::{Point, Vector};
 
@@ -72,5 +101,60 @@ mod test {
         let transform = scaling(-1.0, 1.0, 1.0);
         let p = Point::new(2.0, 3.0, 4.0);
         assert_eq!(transform * p, Ok(Point::new(-2.0, 3.0, 4.0)));
+    }
+
+    #[test]
+    fn rotate_x() {
+        let p = Point::new(0.0, 1.0, 0.0);
+        let half_quarter = rotation_x(PI / 4.0);
+        let full_quarter = rotation_x(PI / 2.0);
+        assert_eq!(
+            half_quarter * p,
+            Ok(Point::new(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0))
+        );
+        assert_eq!(full_quarter * p, Ok(Point::new(0.0, 0.0, 1.0)));
+    }
+
+    #[test]
+    fn inverse_rotate() {
+        let p = Point::new(0.0, 1.0, 0.0);
+        let half_quarter = rotation_x(PI / 4.0);
+        let inverse = half_quarter.inverse().expect("cannot take inverse");
+        assert_eq!(
+            inverse * p,
+            Ok(Point::new(
+                0.0,
+                2.0_f64.sqrt() / 2.0,
+                -(2.0_f64.sqrt()) / 2.0
+            ))
+        );
+    }
+
+    #[test]
+    fn rotate_y() {
+        let p = Point::new(0.0, 0.0, 1.0);
+        let half_quarter = rotation_y(PI / 4.0);
+        let full_quarter = rotation_y(PI / 2.0);
+        assert_eq!(
+            half_quarter * p,
+            Ok(Point::new(2.0_f64.sqrt() / 2.0, 0.0, 2.0_f64.sqrt() / 2.0))
+        );
+        assert_eq!(full_quarter * p, Ok(Point::new(1.0, 0.0, 0.0)));
+    }
+
+    #[test]
+    fn rotate_z() {
+        let p = Point::new(0.0, 1.0, 0.0);
+        let half_quarter = rotation_z(PI / 4.0);
+        let full_quarter = rotation_z(PI / 2.0);
+        assert_eq!(
+            half_quarter * p,
+            Ok(Point::new(
+                -(2.0_f64.sqrt()) / 2.0,
+                2.0_f64.sqrt() / 2.0,
+                0.0
+            ))
+        );
+        assert_eq!(full_quarter * p, Ok(Point::new(-1.0, 0.0, 0.0)));
     }
 }
