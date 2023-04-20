@@ -45,6 +45,22 @@ pub fn rotation_z(r: f64) -> Matrix {
     ])
 }
 
+pub fn shearing(
+    x_by_y: f64,
+    x_by_z: f64,
+    y_by_x: f64,
+    y_by_z: f64,
+    z_by_x: f64,
+    z_by_y: f64,
+) -> Matrix {
+    Matrix::new([
+        [1.0, x_by_y, x_by_z, 0.0],
+        [y_by_x, 1.0, y_by_z, 0.0],
+        [z_by_x, z_by_y, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ])
+}
+
 #[cfg(test)]
 mod test {
     use std::f64::consts::PI;
@@ -156,5 +172,47 @@ mod test {
             ))
         );
         assert_eq!(full_quarter * p, Ok(Point::new(-1.0, 0.0, 0.0)));
+    }
+
+    #[test]
+    fn shear_x_by_y() {
+        let transform = shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let p = Point::new(2.0, 3.0, 4.0);
+        assert_eq!(transform * p, Ok(Point::new(5.0, 3.0, 4.0)));
+    }
+
+    #[test]
+    fn shear_x_by_z() {
+        let transform = shearing(0.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+        let p = Point::new(2.0, 3.0, 4.0);
+        assert_eq!(transform * p, Ok(Point::new(6.0, 3.0, 4.0)));
+    }
+
+    #[test]
+    fn shear_y_by_x() {
+        let transform = shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+        let p = Point::new(2.0, 3.0, 4.0);
+        assert_eq!(transform * p, Ok(Point::new(2.0, 5.0, 4.0)));
+    }
+
+    #[test]
+    fn shear_y_by_z() {
+        let transform = shearing(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        let p = Point::new(2.0, 3.0, 4.0);
+        assert_eq!(transform * p, Ok(Point::new(2.0, 7.0, 4.0)));
+    }
+
+    #[test]
+    fn shear_z_by_x() {
+        let transform = shearing(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+        let p = Point::new(2.0, 3.0, 4.0);
+        assert_eq!(transform * p, Ok(Point::new(2.0, 3.0, 6.0)));
+    }
+
+    #[test]
+    fn shear_z_by_y() {
+        let transform = shearing(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+        let p = Point::new(2.0, 3.0, 4.0);
+        assert_eq!(transform * p, Ok(Point::new(2.0, 3.0, 7.0)));
     }
 }
