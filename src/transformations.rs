@@ -1,4 +1,4 @@
-use crate::matrices::Matrix;
+use crate::matrices::{Matrix, IDENTITY};
 
 pub fn translation(x: f64, y: f64, z: f64) -> Matrix {
     Matrix::new([
@@ -59,6 +59,65 @@ pub fn shearing(
         [z_by_x, z_by_y, 1.0, 0.0],
         [0.0, 0.0, 0.0, 1.0],
     ])
+}
+
+#[derive(Default, Debug, Clone, PartialEq)]
+pub struct Builder {
+    current: Matrix,
+}
+
+impl Builder {
+    pub fn new() -> Self {
+        Builder { current: IDENTITY }
+    }
+
+    pub fn translation(self, x: f64, y: f64, z: f64) -> Builder {
+        Builder {
+            current: translation(x, y, z) * self.current,
+        }
+    }
+
+    pub fn scaling(self, x: f64, y: f64, z: f64) -> Builder {
+        Builder {
+            current: scaling(x, y, z) * self.current,
+        }
+    }
+
+    pub fn rotation_x(self, r: f64) -> Builder {
+        Builder {
+            current: rotation_x(r) * self.current,
+        }
+    }
+
+    pub fn rotation_y(self, r: f64) -> Builder {
+        Builder {
+            current: rotation_y(r) * self.current,
+        }
+    }
+
+    pub fn rotation_z(self, r: f64) -> Builder {
+        Builder {
+            current: rotation_z(r) * self.current,
+        }
+    }
+
+    pub fn shearing(
+        self,
+        x_by_y: f64,
+        x_by_z: f64,
+        y_by_x: f64,
+        y_by_z: f64,
+        z_by_x: f64,
+        z_by_y: f64,
+    ) -> Builder {
+        Builder {
+            current: shearing(x_by_y, x_by_z, y_by_x, y_by_z, z_by_x, z_by_y) * self.current,
+        }
+    }
+
+    pub fn transformation(&self) -> Matrix {
+        self.current
+    }
 }
 
 #[cfg(test)]
@@ -214,5 +273,41 @@ mod test {
         let transform = shearing(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         let p = Point::new(2.0, 3.0, 4.0);
         assert_eq!(transform * p, Ok(Point::new(2.0, 3.0, 7.0)));
+    }
+
+    #[test]
+    fn sequence_of_transformations() {
+        let p = Point::new(1.0, 0.0, 1.0);
+        let a = rotation_x(PI / 2.0);
+        let b = scaling(5.0, 5.0, 5.0);
+        let c = translation(10.0, 5.0, 7.0);
+        let p2 = (a * p).expect("matrix casting error");
+        assert_eq!(p2, Point::new(1.0, -1.0, 0.0));
+        let p3 = (b * p2).expect("matrix casting error");
+        assert_eq!(p3, Point::new(5.0, -5.0, 0.0));
+        let p4 = (c * p3).expect("matrix casting error");
+        assert_eq!(p4, Point::new(15.0, 0.0, 7.0));
+    }
+
+    #[test]
+    fn chained_transformations() {
+        let p = Point::new(1.0, 0.0, 1.0);
+        let a = rotation_x(PI / 2.0);
+        let b = scaling(5.0, 5.0, 5.0);
+        let c = translation(10.0, 5.0, 7.0);
+        let t = c * b * a;
+        assert_eq!(t * p, Ok(Point::new(15.0, 0.0, 7.0)));
+    }
+
+    #[test]
+    fn build_transformation() {
+        let p = Point::new(1.0, 0.0, 1.0);
+        let t = Builder::new()
+            .rotation_x(PI / 2.0)
+            .scaling(5.0, 5.0, 5.0)
+            .translation(10.0, 5.0, 7.0)
+            .shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0)
+            .transformation();
+        assert_eq!(t * p, Ok(Point::new(15.0, 15.0, 7.0)));
     }
 }
