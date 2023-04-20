@@ -256,7 +256,20 @@ impl Matrix {
     }
 
     pub fn inverse(&self) -> Result<Matrix, NoInverseError> {
-        todo!();
+        let determinant = self.determinant();
+        if determinant == 0.0 {
+            return Err(NoInverseError);
+        }
+
+        let mut entries = [[0.0; 4]; 4];
+        for i in 0..4 {
+            for j in 0..4 {
+                let cofactor = self.cofactor(i, j);
+                entries[j][i] = cofactor.expect("matrix index error") / determinant;
+            }
+        }
+
+        Ok(Matrix::new(entries))
     }
 }
 
