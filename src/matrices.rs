@@ -219,6 +219,9 @@ pub struct Matrix {
     raw: RawMatrix<4, 4>,
 }
 
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
+pub struct NoInverseError;
+
 impl Matrix {
     pub fn new(entries: [[f64; 4]; 4]) -> Matrix {
         Matrix {
@@ -250,6 +253,10 @@ impl Matrix {
 
     pub fn invertible(&self) -> bool {
         self.determinant() != 0.0
+    }
+
+    pub fn inverse(&self) -> Result<Matrix, NoInverseError> {
+        todo!();
     }
 }
 
@@ -603,5 +610,30 @@ mod test {
         ]);
         assert_eq!(a.determinant(), 0.0);
         assert!(!a.invertible());
+    }
+
+    #[test]
+    fn inverse() {
+        let a = Matrix::new([
+            [-5.0, 2.0, 6.0, -8.0],
+            [1.0, -5.0, 1.0, 8.0],
+            [7.0, 7.0, -6.0, -7.0],
+            [1.0, -3.0, 7.0, 4.0],
+        ]);
+        let b = a.inverse().expect("no inverse");
+        assert_eq!(a.determinant(), 532.0);
+        assert_eq!(a.cofactor(2, 3), Ok(-160.0));
+        assert_eq!(b[[3, 2]], -160.0 / 532.0);
+        assert_eq!(a.cofactor(3, 2), Ok(105.0));
+        assert_eq!(b[[2, 3]], 105.0 / 532.0);
+        assert_eq!(
+            b,
+            Matrix::new([
+                [0.21805, 0.45113, 0.24060, -0.04511],
+                [-0.80827, -1.45677, -0.44361, 0.52068],
+                [-0.07895, -0.22368, -0.05263, 0.19737],
+                [-0.52256, -0.81391, -0.30075, 0.30639],
+            ])
+        );
     }
 }
