@@ -61,7 +61,7 @@ pub fn shearing(
     ])
 }
 
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct Builder {
     current: Matrix,
 }
