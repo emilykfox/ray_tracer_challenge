@@ -17,13 +17,13 @@ pub enum IntersectingSphereError {
 }
 
 impl From<NoInverseError> for IntersectingSphereError {
-    fn from(value: NoInverseError) -> Self {
+    fn from(_value: NoInverseError) -> Self {
         IntersectingSphereError::NoInverse
     }
 }
 
 impl From<CastingMatrixError> for IntersectingSphereError {
-    fn from(value: CastingMatrixError) -> Self {
+    fn from(_value: CastingMatrixError) -> Self {
         IntersectingSphereError::CastingMatrix
     }
 }

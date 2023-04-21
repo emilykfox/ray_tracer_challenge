@@ -235,18 +235,6 @@ impl Matrix {
         }
     }
 
-    fn submatrix(&self, i: usize, j: usize) -> Result<RawMatrix<3, 3>, MatrixIndexError> {
-        self.raw.submatrix(i, j)
-    }
-
-    fn minor(&self, i: usize, j: usize) -> Result<f64, MatrixIndexError> {
-        self.raw.minor(i, j)
-    }
-
-    fn cofactor(&self, i: usize, j: usize) -> Result<f64, MatrixIndexError> {
-        self.raw.cofactor(i, j)
-    }
-
     pub fn determinant(&self) -> f64 {
         self.raw.determinant()
     }
@@ -262,10 +250,10 @@ impl Matrix {
         }
 
         let mut entries = [[0.0; 4]; 4];
-        for i in 0..4 {
-            for j in 0..4 {
-                let cofactor = self.cofactor(i, j);
-                entries[j][i] = cofactor.expect("matrix index error") / determinant;
+        for (i, row) in entries.iter_mut().enumerate() {
+            for (j, entry) in row.iter_mut().enumerate() {
+                let cofactor = self.raw.cofactor(j, i);
+                *entry = cofactor.expect("matrix index error") / determinant;
             }
         }
 
@@ -551,7 +539,7 @@ mod test {
             [-7.0, 1.0, -1.0, 1.0],
         ]);
         assert_eq!(
-            a.submatrix(2, 1),
+            a.raw.submatrix(2, 1),
             Ok(RawMatrix::new([
                 [-6.0, 1.0, 6.0],
                 [-8.0, 8.0, 6.0],
@@ -594,10 +582,10 @@ mod test {
             [1.0, 2.0, -9.0, 6.0],
             [-6.0, 7.0, 7.0, -9.0],
         ]);
-        assert_eq!(a.cofactor(0, 0), Ok(690.0));
-        assert_eq!(a.cofactor(0, 1), Ok(447.0));
-        assert_eq!(a.cofactor(0, 2), Ok(210.0));
-        assert_eq!(a.cofactor(0, 3), Ok(51.0));
+        assert_eq!(a.raw.cofactor(0, 0), Ok(690.0));
+        assert_eq!(a.raw.cofactor(0, 1), Ok(447.0));
+        assert_eq!(a.raw.cofactor(0, 2), Ok(210.0));
+        assert_eq!(a.raw.cofactor(0, 3), Ok(51.0));
         assert_eq!(a.determinant(), -4071.0);
     }
 
@@ -635,9 +623,9 @@ mod test {
         ]);
         let b = a.inverse().expect("no inverse");
         assert_eq!(a.determinant(), 532.0);
-        assert_eq!(a.cofactor(2, 3), Ok(-160.0));
+        assert_eq!(a.raw.cofactor(2, 3), Ok(-160.0));
         assert_eq!(b[[3, 2]], -160.0 / 532.0);
-        assert_eq!(a.cofactor(3, 2), Ok(105.0));
+        assert_eq!(a.raw.cofactor(3, 2), Ok(105.0));
         assert_eq!(b[[2, 3]], 105.0 / 532.0);
         assert_eq!(
             b,
