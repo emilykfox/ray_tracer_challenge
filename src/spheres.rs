@@ -1,15 +1,20 @@
 use crate::{
     intersections::{Intersection, Intersections},
+    matrices::{Matrix, IDENTITY},
     rays::Ray,
     Point, Vector,
 };
 
 #[derive(Default, Debug, Copy, Clone, PartialEq)]
-pub struct Sphere {}
+pub struct Sphere {
+    transform: Matrix,
+}
 
 impl Sphere {
     pub fn new() -> Sphere {
-        Sphere {}
+        Sphere {
+            transform: IDENTITY,
+        }
     }
 
     pub fn intersect(&self, ray: Ray) -> Intersections {

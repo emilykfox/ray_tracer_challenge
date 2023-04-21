@@ -26,10 +26,10 @@ impl Ray {
         self.direction
     }
 
-    pub fn transformed(&self, transformation: Matrix) -> Result<Ray, CastingMatrixError> {
+    pub fn transformed(&self, transform: Matrix) -> Result<Ray, CastingMatrixError> {
         Ok(Ray {
-            origin: (transformation * self.origin)?,
-            direction: (transformation * self.direction)?,
+            origin: (transform * self.origin)?,
+            direction: (transform * self.direction)?,
         })
     }
 }
