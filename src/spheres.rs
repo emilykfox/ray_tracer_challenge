@@ -1,6 +1,6 @@
 use crate::{
     intersections::{Intersection, Intersections},
-    matrices::{CastingMatrixError, Matrix, NoInverseError, IDENTITY},
+    matrices::{Matrix, IDENTITY},
     rays::Ray,
     Point, Vector,
 };
@@ -8,6 +8,7 @@ use crate::{
 #[derive(Default, Debug, Copy, Clone, PartialEq)]
 pub struct Sphere {
     transform: Matrix,
+    inverse: Option<Matrix>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -16,31 +17,24 @@ pub enum IntersectingSphereError {
     CastingMatrix,
 }
 
-impl From<NoInverseError> for IntersectingSphereError {
-    fn from(_value: NoInverseError) -> Self {
-        IntersectingSphereError::NoInverse
-    }
-}
-
-impl From<CastingMatrixError> for IntersectingSphereError {
-    fn from(_value: CastingMatrixError) -> Self {
-        IntersectingSphereError::CastingMatrix
-    }
-}
-
 impl Sphere {
     pub fn new() -> Sphere {
         Sphere {
             transform: IDENTITY,
+            inverse: Some(IDENTITY),
         }
     }
 
     pub fn set_transform(&mut self, transform: Matrix) {
         self.transform = transform;
+        self.inverse = transform.inverse().ok();
     }
 
     pub fn intersect(&self, ray: Ray) -> Result<Intersections, IntersectingSphereError> {
-        let ray2 = ray.transformed(self.transform.inverse()?)?;
+        let inverse = self.inverse.ok_or(IntersectingSphereError::NoInverse)?;
+        let ray2 = ray
+            .transformed(inverse)
+            .map_err(|_| IntersectingSphereError::CastingMatrix)?;
         let sphere_to_ray = ray2.origin() - Point::new(0.0, 0.0, 0.0);
 
         let a = Vector::dot(ray2.direction(), ray2.direction());
