@@ -14,6 +14,14 @@ impl Ray {
     pub fn position(&self, t: f64) -> Point {
         self.origin + self.direction * t
     }
+
+    pub fn origin(&self) -> Point {
+        self.origin
+    }
+
+    pub fn direction(&self) -> Vector {
+        self.direction
+    }
 }
 
 #[cfg(test)]
