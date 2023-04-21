@@ -23,11 +23,20 @@ impl<'object> Intersection<'object> {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Intersections<'objects> {
     intersections: Vec<Intersection<'objects>>,
+    first_hit: Option<Intersection<'objects>>,
 }
 
 impl<'objects> Intersections<'objects> {
     pub fn new(intersections: Vec<Intersection<'objects>>) -> Self {
-        Intersections { intersections }
+        let first_hit = intersections
+            .iter()
+            .filter(|intersection| intersection.t() >= 0.0)
+            .min_by(|x, y| x.t().total_cmp(&y.t()))
+            .copied();
+        Intersections {
+            intersections,
+            first_hit,
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -35,11 +44,7 @@ impl<'objects> Intersections<'objects> {
     }
 
     pub fn hit(&self) -> Option<Intersection<'objects>> {
-        self.intersections
-            .iter()
-            .filter(|intersection| intersection.t() >= 0.0)
-            .min_by(|x, y| x.t().total_cmp(&y.t()))
-            .copied()
+        self.first_hit
     }
 }
 
