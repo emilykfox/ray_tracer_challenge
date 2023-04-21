@@ -17,6 +17,10 @@ impl Sphere {
         }
     }
 
+    pub fn set_transform(&mut self, transform: Matrix) {
+        self.transform = transform;
+    }
+
     pub fn intersect(&self, ray: Ray) -> Intersections {
         let origin = ray.origin();
         let direction = ray.direction();
@@ -43,7 +47,7 @@ impl Sphere {
 
 #[cfg(test)]
 mod test {
-    use crate::{rays::Ray, Point, Vector};
+    use crate::{rays::Ray, transformations::translation, Point, Vector};
 
     use super::*;
 
@@ -103,5 +107,19 @@ mod test {
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].object(), &s);
         assert_eq!(xs[1].object(), &s);
+    }
+
+    #[test]
+    fn default_transform() {
+        let s = Sphere::new();
+        assert_eq!(s.transform, IDENTITY);
+    }
+
+    #[test]
+    fn change_transform() {
+        let mut s = Sphere::new();
+        let t = translation(2.0, 3.0, 4.0);
+        s.set_transform(t);
+        assert_eq!(s.transform, t);
     }
 }
