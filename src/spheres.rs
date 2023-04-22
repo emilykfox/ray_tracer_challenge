@@ -56,15 +56,17 @@ impl Sphere {
     }
 
     pub fn normal_at(&self, point: Point) -> Vector {
-        point - Point::new(0.0, 0.0, 0.0)
+        let object_point = self.inverse * point;
     }
 }
 
 #[cfg(test)]
 mod test {
+    use std::f64::consts::{FRAC_1_SQRT_2, PI};
+
     use crate::{
         rays::Ray,
-        transformations::{scaling, translation},
+        transformations::{rotation_z, scaling, translation},
         Point, Vector,
     };
 
@@ -210,5 +212,22 @@ mod test {
             3.0_f64.sqrt() / 3.0,
         ));
         assert_eq!(n, n.normalize());
+    }
+
+    #[test]
+    fn normal_on_translated_sphere() {
+        let mut s = Sphere::new();
+        s.set_transform(translation(0.0, 1.0, 0.0));
+        let n = s.normal_at(Point::new(0.0, 1.0 + FRAC_1_SQRT_2, -FRAC_1_SQRT_2));
+        assert_eq!(n, Vector::new(0.0, FRAC_1_SQRT_2, -FRAC_1_SQRT_2));
+    }
+
+    #[test]
+    fn normal_on_transformed_sphere() {
+        let mut s = Sphere::new();
+        let m = scaling(1.0, 0.5, 1.0) * rotation_z(PI / 5.0);
+        s.set_transform(m);
+        let n = s.normal_at(Point::new(0.0, 2_f64.sqrt() / 2.0, -(2_f64.sqrt()) / 2.0));
+        assert_eq!(n, Vector::new(0.0, 0.97014, -0.24254));
     }
 }
