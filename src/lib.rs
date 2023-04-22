@@ -7,3 +7,5 @@ pub mod transformations;
 mod tuples;
 
 pub use tuples::{Point, Vector};
+
+const EQUALITY_EPSILON: f64 = 0.00001;

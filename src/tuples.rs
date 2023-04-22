@@ -1,5 +1,3 @@
-const EQUALITY_EPSILON: f64 = 0.00001;
-
 /// A 3-dimensional point
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct Point {

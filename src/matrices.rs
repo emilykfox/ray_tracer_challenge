@@ -1,49 +1,88 @@
-use crate::{tuples::Tuple, Point, Vector};
-
-pub const IDENTITY: Matrix = Matrix {
-    raw: RawMatrix {
-        entries: [
-            [1.0, 0.0, 0.0, 0.0],
-            [0.0, 1.0, 0.0, 0.0],
-            [0.0, 0.0, 1.0, 0.0],
-            [0.0, 0.0, 0.0, 1.0],
-        ],
-    },
-};
-const EQUALITY_EPSILON: f64 = 0.00001;
+use crate::{Point, Vector, EQUALITY_EPSILON};
 
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
 struct MatrixIndexError;
 
 #[derive(Debug, Copy, Clone)]
-struct RawMatrix<const M: usize, const N: usize> {
+pub struct Matrix<const M: usize, const N: usize> {
     entries: [[f64; N]; M],
 }
 
-impl<const M: usize, const N: usize> RawMatrix<M, N> {
+impl<const M: usize, const N: usize> Matrix<M, N> {
     pub fn new(entries: [[f64; N]; M]) -> Self {
-        RawMatrix { entries }
+        Matrix { entries }
     }
 
-    pub fn transpose(&self) -> RawMatrix<N, M> {
+    pub fn transpose(&self) -> Matrix<N, M> {
         let mut entries = [[0.0; M]; N];
         for (i, row) in self.entries.iter().enumerate() {
             for (j, entry) in row.iter().enumerate() {
                 entries[j][i] = *entry;
             }
         }
-        RawMatrix { entries }
+        Matrix { entries }
     }
 }
 
-impl RawMatrix<2, 2> {
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
+pub struct NoInverseError;
+
+impl Matrix<2, 2> {
+    pub fn submatrix(&self, i: usize, j: usize) -> Result<Matrix<1, 1>, MatrixIndexError> {
+        if i > 1 || j > 1 {
+            Err(MatrixIndexError)
+        } else {
+            Ok(Matrix {
+                entries: [[self.entries[1 - i][1 - j]]],
+            })
+        }
+    }
+
+    pub fn minor(&self, i: usize, j: usize) -> Result<f64, MatrixIndexError> {
+        Ok(self.submatrix(i, j)?[[0, 0]])
+    }
+
+    pub fn cofactor(&self, i: usize, j: usize) -> Result<f64, MatrixIndexError> {
+        let minor = self.minor(i, j)?;
+        if (i + j) % 2 == 0 {
+            Ok(minor)
+        } else {
+            Ok(-minor)
+        }
+    }
+
     pub fn determinant(&self) -> f64 {
-        self.entries[0][0] * self.entries[1][1] - self.entries[0][1] * self.entries[1][0]
+        self.entries[0]
+            .iter()
+            .enumerate()
+            .map(|(j, entry)| entry * self.cofactor(0, j).expect("matrix index error"))
+            .sum()
+    }
+
+    pub fn invertible(&self) -> bool {
+        self.determinant() != 0.0
+    }
+
+    pub fn inverse(&self) -> Result<Matrix<2, 2>, NoInverseError> {
+        let determinant = self.determinant();
+        if determinant == 0.0 {
+            return Err(NoInverseError);
+        }
+
+        let mut entries = [[0.0; 2]; 2];
+        for (i, row) in entries.iter_mut().enumerate() {
+            for (j, entry) in row.iter_mut().enumerate() {
+                let cofactor = self.cofactor(j, i);
+                *entry = cofactor.expect("matrix index error") / determinant;
+            }
+        }
+
+        Ok(Matrix { entries })
     }
 }
 
-impl RawMatrix<3, 3> {
-    pub fn submatrix(&self, i: usize, j: usize) -> Result<RawMatrix<2, 2>, MatrixIndexError> {
+impl Matrix<3, 3> {
+    pub fn submatrix(&self, i: usize, j: usize) -> Result<Matrix<2, 2>, MatrixIndexError> {
         if i > 2 || j > 2 {
             Err(MatrixIndexError)
         } else {
@@ -64,7 +103,7 @@ impl RawMatrix<3, 3> {
                     entries[k][l] = *entry;
                 }
             }
-            Ok(RawMatrix { entries })
+            Ok(Matrix { entries })
         }
     }
 
@@ -88,10 +127,31 @@ impl RawMatrix<3, 3> {
             .map(|(j, entry)| entry * self.cofactor(0, j).expect("matrix index error"))
             .sum()
     }
+
+    pub fn invertible(&self) -> bool {
+        self.determinant() != 0.0
+    }
+
+    pub fn inverse(&self) -> Result<Matrix<3, 3>, NoInverseError> {
+        let determinant = self.determinant();
+        if determinant == 0.0 {
+            return Err(NoInverseError);
+        }
+
+        let mut entries = [[0.0; 3]; 3];
+        for (i, row) in entries.iter_mut().enumerate() {
+            for (j, entry) in row.iter_mut().enumerate() {
+                let cofactor = self.cofactor(j, i);
+                *entry = cofactor.expect("matrix index error") / determinant;
+            }
+        }
+
+        Ok(Matrix { entries })
+    }
 }
 
-impl RawMatrix<4, 4> {
-    pub fn submatrix(&self, i: usize, j: usize) -> Result<RawMatrix<3, 3>, MatrixIndexError> {
+impl Matrix<4, 4> {
+    pub fn submatrix(&self, i: usize, j: usize) -> Result<Matrix<3, 3>, MatrixIndexError> {
         if i > 3 || j > 3 {
             Err(MatrixIndexError)
         } else {
@@ -112,7 +172,7 @@ impl RawMatrix<4, 4> {
                     entries[k][l] = *entry;
                 }
             }
-            Ok(RawMatrix { entries })
+            Ok(Matrix { entries })
         }
     }
 
@@ -136,25 +196,48 @@ impl RawMatrix<4, 4> {
             .map(|(j, entry)| entry * self.cofactor(0, j).expect("matrix index error"))
             .sum()
     }
+
+    pub fn invertible(&self) -> bool {
+        self.determinant() != 0.0
+    }
+
+    pub fn inverse(&self) -> Result<Matrix<4, 4>, NoInverseError> {
+        let determinant = self.determinant();
+        if determinant == 0.0 {
+            return Err(NoInverseError);
+        }
+
+        let mut entries = [[0.0; 4]; 4];
+        for (i, row) in entries.iter_mut().enumerate() {
+            for (j, entry) in row.iter_mut().enumerate() {
+                let cofactor = self.cofactor(j, i);
+                *entry = cofactor.expect("matrix index error") / determinant;
+            }
+        }
+
+        Ok(Matrix { entries })
+    }
 }
 
-impl<const M: usize, const N: usize> Default for RawMatrix<M, N> {
+impl<const M: usize, const N: usize> Default for Matrix<M, N> {
     fn default() -> Self {
-        /*
-        TODO?: Use this code for identity matrix.
-        let mut entries = [[0.0; N]; N];
-        for (i, entry) in entries.iter_mut().enumerate() {
-            entry[i] = 1.0;
-        }
-        RawMatrix { entries }
-        */
-        RawMatrix {
+        Matrix {
             entries: [[0.0; N]; M],
         }
     }
 }
 
-impl<const M: usize, const N: usize> PartialEq for RawMatrix<M, N> {
+impl<const N: usize> Matrix<N, N> {
+    pub fn identity() -> Self {
+        let mut entries = [[0.0; N]; N];
+        for (i, row) in entries.iter_mut().enumerate() {
+            row[i] = 1.0;
+        }
+        Matrix { entries }
+    }
+}
+
+impl<const M: usize, const N: usize> PartialEq for Matrix<M, N> {
     fn eq(&self, other: &Self) -> bool {
         for (&x, &y) in self
             .entries
@@ -171,7 +254,7 @@ impl<const M: usize, const N: usize> PartialEq for RawMatrix<M, N> {
     }
 }
 
-impl<const M: usize, const N: usize> std::ops::Index<[usize; 2]> for RawMatrix<M, N> {
+impl<const M: usize, const N: usize> std::ops::Index<[usize; 2]> for Matrix<M, N> {
     type Output = f64;
 
     fn index(&self, index: [usize; 2]) -> &Self::Output {
@@ -179,139 +262,90 @@ impl<const M: usize, const N: usize> std::ops::Index<[usize; 2]> for RawMatrix<M
     }
 }
 
-impl<const M: usize, const N: usize, const O: usize> std::ops::Mul<RawMatrix<N, O>>
-    for RawMatrix<M, N>
-{
-    type Output = RawMatrix<M, O>;
+impl<const M: usize, const N: usize, const O: usize> std::ops::Mul<Matrix<N, O>> for Matrix<M, N> {
+    type Output = Matrix<M, O>;
 
-    fn mul(self, rhs: RawMatrix<N, O>) -> Self::Output {
+    fn mul(self, rhs: Matrix<N, O>) -> Self::Output {
         let mut entries = [[0.0; O]; M];
         for (i, row) in entries.iter_mut().enumerate() {
             for (j, entry) in row.iter_mut().enumerate() {
                 *entry = (0..N).map(|k| self.entries[i][k] * rhs.entries[k][j]).sum()
             }
         }
-        RawMatrix { entries }
+        Matrix { entries }
     }
 }
 
-impl From<Tuple> for RawMatrix<4, 1> {
-    fn from(value: Tuple) -> Self {
-        RawMatrix {
-            entries: [[value.x], [value.y], [value.z], [value.w]],
+impl From<Point> for Matrix<4, 1> {
+    fn from(value: Point) -> Self {
+        Matrix {
+            entries: [[value.x()], [value.y()], [value.z()], [1.0]],
         }
     }
 }
 
-impl From<RawMatrix<4, 1>> for Tuple {
-    fn from(value: RawMatrix<4, 1>) -> Self {
-        Tuple {
+impl From<Vector> for Matrix<4, 1> {
+    fn from(value: Vector) -> Self {
+        Matrix {
+            entries: [[value.x()], [value.y()], [value.z()], [0.0]],
+        }
+    }
+}
+
+impl From<Matrix<4, 1>> for Point {
+    fn from(value: Matrix<4, 1>) -> Self {
+        Point {
             x: value.entries[0][0],
             y: value.entries[1][0],
             z: value.entries[2][0],
-            w: value.entries[3][0],
         }
     }
 }
 
-#[derive(Default, Debug, Copy, Clone, PartialEq)]
-pub struct Matrix {
-    raw: RawMatrix<4, 4>,
-}
-
-#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct NoInverseError;
-
-impl Matrix {
-    pub fn new(entries: [[f64; 4]; 4]) -> Matrix {
-        Matrix {
-            raw: RawMatrix::new(entries),
-        }
-    }
-
-    pub fn transpose(&self) -> Matrix {
-        Matrix {
-            raw: self.raw.transpose(),
-        }
-    }
-
-    pub fn determinant(&self) -> f64 {
-        self.raw.determinant()
-    }
-
-    pub fn invertible(&self) -> bool {
-        self.determinant() != 0.0
-    }
-
-    pub fn inverse(&self) -> Result<Matrix, NoInverseError> {
-        let determinant = self.determinant();
-        if determinant == 0.0 {
-            return Err(NoInverseError);
-        }
-
-        let mut entries = [[0.0; 4]; 4];
-        for (i, row) in entries.iter_mut().enumerate() {
-            for (j, entry) in row.iter_mut().enumerate() {
-                let cofactor = self.raw.cofactor(j, i);
-                *entry = cofactor.expect("matrix index error") / determinant;
-            }
-        }
-
-        Ok(Matrix::new(entries))
-    }
-}
-
-impl std::ops::Index<[usize; 2]> for Matrix {
-    type Output = f64;
-
-    fn index(&self, index: [usize; 2]) -> &Self::Output {
-        &self.raw[index]
-    }
-}
-
-impl std::ops::Mul for Matrix {
-    type Output = Matrix;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        Matrix {
-            raw: self.raw * rhs.raw,
+impl From<Matrix<4, 1>> for Vector {
+    fn from(value: Matrix<4, 1>) -> Self {
+        Vector {
+            x: value.entries[0][0],
+            y: value.entries[1][0],
+            z: value.entries[2][0],
         }
     }
 }
 
-impl std::ops::Mul<Tuple> for Matrix {
-    type Output = Tuple;
-
-    fn mul(self, rhs: Tuple) -> Self::Output {
-        Tuple::from(self.raw * RawMatrix::from(rhs))
-    }
-}
+pub type Transform = Matrix<4, 4>;
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct CastingMatrixError;
 
-/// Will return `Err(CastingMatrixError)`` if enclosed `Tuple` cannot be converted to a `Point`
-impl std::ops::Mul<Point> for Matrix {
+impl std::ops::Mul<Point> for Transform {
     type Output = Result<Point, CastingMatrixError>;
 
     fn mul(self, rhs: Point) -> Self::Output {
-        Point::try_from(self * Tuple::from(rhs)).map_err(|_| CastingMatrixError)
+        let product = self * Matrix::from(rhs);
+        if product[[3, 0]] != 1.0 {
+            Err(CastingMatrixError)
+        } else {
+            Ok(product.into())
+        }
     }
 }
 
 /// Will return `Err(CastingMatrixError)`` if enclosed `Tuple` cannot be converted to a `Vector`
-impl std::ops::Mul<Vector> for Matrix {
+impl std::ops::Mul<Vector> for Transform {
     type Output = Result<Vector, CastingMatrixError>;
 
     fn mul(self, rhs: Vector) -> Self::Output {
-        Vector::try_from(self * Tuple::from(rhs)).map_err(|_| CastingMatrixError)
+        let product = self * Matrix::from(rhs);
+        if product[[3, 0]] != 0.0 {
+            Err(CastingMatrixError)
+        } else {
+            Ok(product.into())
+        }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::tuples::Tuple;
-
     use super::*;
 
     #[test]
@@ -334,7 +368,7 @@ mod test {
 
     #[test]
     fn construct_2x2() {
-        let m = RawMatrix::new([[-3.0, 5.0], [1.0, -2.0]]);
+        let m = Matrix::new([[-3.0, 5.0], [1.0, -2.0]]);
 
         assert_eq!(m[[0, 0]], -3.0);
         assert_eq!(m[[0, 1]], 5.0);
@@ -344,7 +378,7 @@ mod test {
 
     #[test]
     fn construct_3x3() {
-        let m = RawMatrix::new([[-3.0, 5.0, 0.0], [1.0, -2.0, -7.0], [0.0, 1.0, 1.0]]);
+        let m = Matrix::new([[-3.0, 5.0, 0.0], [1.0, -2.0, -7.0], [0.0, 1.0, 1.0]]);
 
         assert_eq!(m[[0, 0]], -3.0);
         assert_eq!(m[[1, 1]], -2.0);
@@ -425,18 +459,6 @@ mod test {
     }
 
     #[test]
-    fn matrix_multiply_tuple() {
-        let a = Matrix::new([
-            [1.0, 2.0, 3.0, 4.0],
-            [2.0, 4.0, 4.0, 2.0],
-            [8.0, 6.0, 4.0, 1.0],
-            [0.0, 0.0, 0.0, 1.0],
-        ]);
-        let b = Tuple::new(1.0, 2.0, 3.0, 1.0);
-        assert_eq!(a * b, Tuple::new(18.0, 24.0, 33.0, 1.0));
-    }
-
-    #[test]
     fn matrix_multiply_point() {
         let a = Matrix::new([
             [1.0, 2.0, 3.0, 4.0],
@@ -482,13 +504,19 @@ mod test {
             [2.0, 4.0, 8.0, 16.0],
             [4.0, 8.0, 16.0, 32.0],
         ]);
-        assert_eq!(a * IDENTITY, a);
+        assert_eq!(a * Matrix::identity(), a);
     }
 
     #[test]
-    fn identity_times_tuple() {
-        let a = Tuple::new(1.0, 2.0, 3.0, 4.0);
-        assert_eq!(IDENTITY * a, a);
+    fn identity_times_point() {
+        let a = Point::new(1.0, 2.0, 3.0);
+        assert_eq!(Matrix::identity() * a, Ok(a));
+    }
+
+    #[test]
+    fn identity_times_vector() {
+        let a = Vector::new(1.0, 2.0, 3.0);
+        assert_eq!(Matrix::identity() * a, Ok(a));
     }
 
     #[test]
@@ -512,21 +540,21 @@ mod test {
 
     #[test]
     fn transpose_identity() {
-        assert_eq!(IDENTITY.transpose(), IDENTITY);
+        assert_eq!(Matrix::identity().transpose(), Matrix::identity());
     }
 
     #[test]
     fn determinant_of_2x2() {
-        let a = RawMatrix::new([[1.0, 5.0], [-3.0, 2.0]]);
+        let a = Matrix::new([[1.0, 5.0], [-3.0, 2.0]]);
         assert_eq!(a.determinant(), 17.0);
     }
 
     #[test]
     fn submatrix_of_3x3() {
-        let a = RawMatrix::new([[1.0, 5.0, 0.0], [-3.0, 2.0, 7.0], [0.0, 6.0, -3.0]]);
+        let a = Matrix::new([[1.0, 5.0, 0.0], [-3.0, 2.0, 7.0], [0.0, 6.0, -3.0]]);
         assert_eq!(
             a.submatrix(0, 2),
-            Ok(RawMatrix::new([[-3.0, 2.0], [0.0, 6.0],]))
+            Ok(Matrix::new([[-3.0, 2.0], [0.0, 6.0],]))
         );
     }
 
@@ -539,8 +567,8 @@ mod test {
             [-7.0, 1.0, -1.0, 1.0],
         ]);
         assert_eq!(
-            a.raw.submatrix(2, 1),
-            Ok(RawMatrix::new([
+            a.submatrix(2, 1),
+            Ok(Matrix::new([
                 [-6.0, 1.0, 6.0],
                 [-8.0, 8.0, 6.0],
                 [-7.0, -1.0, 1.0],
@@ -550,7 +578,7 @@ mod test {
 
     #[test]
     fn minor_of_3x3() {
-        let a = RawMatrix::new([[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]]);
+        let a = Matrix::new([[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]]);
         let b = a.submatrix(1, 0).expect("matrix index error");
         assert_eq!(b.determinant(), 25.0);
         assert_eq!(a.minor(1, 0), Ok(25.0));
@@ -558,7 +586,7 @@ mod test {
 
     #[test]
     fn cofactor_of_3x3() {
-        let a = RawMatrix::new([[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]]);
+        let a = Matrix::new([[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]]);
         assert_eq!(a.minor(0, 0), Ok(-12.0));
         assert_eq!(a.cofactor(0, 0), Ok(-12.0));
         assert_eq!(a.minor(1, 0), Ok(25.0));
@@ -567,7 +595,7 @@ mod test {
 
     #[test]
     fn determinant_of_3x3() {
-        let a = RawMatrix::new([[1.0, 2.0, 6.0], [-5.0, 8.0, -4.0], [2.0, 6.0, 4.0]]);
+        let a = Matrix::new([[1.0, 2.0, 6.0], [-5.0, 8.0, -4.0], [2.0, 6.0, 4.0]]);
         assert_eq!(a.cofactor(0, 0), Ok(56.0));
         assert_eq!(a.cofactor(0, 1), Ok(12.0));
         assert_eq!(a.cofactor(0, 2), Ok(-46.0));
@@ -582,10 +610,10 @@ mod test {
             [1.0, 2.0, -9.0, 6.0],
             [-6.0, 7.0, 7.0, -9.0],
         ]);
-        assert_eq!(a.raw.cofactor(0, 0), Ok(690.0));
-        assert_eq!(a.raw.cofactor(0, 1), Ok(447.0));
-        assert_eq!(a.raw.cofactor(0, 2), Ok(210.0));
-        assert_eq!(a.raw.cofactor(0, 3), Ok(51.0));
+        assert_eq!(a.cofactor(0, 0), Ok(690.0));
+        assert_eq!(a.cofactor(0, 1), Ok(447.0));
+        assert_eq!(a.cofactor(0, 2), Ok(210.0));
+        assert_eq!(a.cofactor(0, 3), Ok(51.0));
         assert_eq!(a.determinant(), -4071.0);
     }
 
@@ -623,9 +651,9 @@ mod test {
         ]);
         let b = a.inverse().expect("no inverse");
         assert_eq!(a.determinant(), 532.0);
-        assert_eq!(a.raw.cofactor(2, 3), Ok(-160.0));
+        assert_eq!(a.cofactor(2, 3), Ok(-160.0));
         assert_eq!(b[[3, 2]], -160.0 / 532.0);
-        assert_eq!(a.raw.cofactor(3, 2), Ok(105.0));
+        assert_eq!(a.cofactor(3, 2), Ok(105.0));
         assert_eq!(b[[2, 3]], 105.0 / 532.0);
         assert_eq!(
             b,
