@@ -1,5 +1,7 @@
+use crate::EQUALITY_EPSILON;
+
 /// A 3-dimensional point
-#[derive(Debug, Default, Copy, Clone, PartialEq)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct Point {
     x: f64,
     y: f64,
@@ -22,6 +24,14 @@ impl Point {
 
     pub fn z(&self) -> f64 {
         self.z
+    }
+}
+
+impl PartialEq for Point {
+    fn eq(&self, other: &Self) -> bool {
+        (self.x - other.x).abs() < EQUALITY_EPSILON
+            && (self.y - other.y).abs() < EQUALITY_EPSILON
+            && (self.z - other.z).abs() < EQUALITY_EPSILON
     }
 }
 
@@ -62,7 +72,7 @@ impl std::ops::Sub<Vector> for Point {
 }
 
 /// A 3-dimensional vector
-#[derive(Debug, Default, Copy, Clone, PartialEq)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct Vector {
     x: f64,
     y: f64,
@@ -105,6 +115,14 @@ impl Vector {
             a.z * b.x - a.x * b.z,
             a.x * b.y - a.y * b.x,
         )
+    }
+}
+
+impl PartialEq for Vector {
+    fn eq(&self, other: &Self) -> bool {
+        (self.x - other.x).abs() < EQUALITY_EPSILON
+            && (self.y - other.y).abs() < EQUALITY_EPSILON
+            && (self.z - other.z).abs() < EQUALITY_EPSILON
     }
 }
 
