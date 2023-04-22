@@ -1,7 +1,7 @@
-use crate::matrices::{Matrix, IDENTITY};
+use crate::matrices::Transform;
 
-pub fn translation(x: f64, y: f64, z: f64) -> Matrix {
-    Matrix::new([
+pub fn translation(x: f64, y: f64, z: f64) -> Transform {
+    Transform::new([
         [1.0, 0.0, 0.0, x],
         [0.0, 1.0, 0.0, y],
         [0.0, 0.0, 1.0, z],
@@ -9,8 +9,8 @@ pub fn translation(x: f64, y: f64, z: f64) -> Matrix {
     ])
 }
 
-pub fn scaling(x: f64, y: f64, z: f64) -> Matrix {
-    Matrix::new([
+pub fn scaling(x: f64, y: f64, z: f64) -> Transform {
+    Transform::new([
         [x, 0.0, 0.0, 0.0],
         [0.0, y, 0.0, 0.0],
         [0.0, 0.0, z, 0.0],
@@ -18,8 +18,8 @@ pub fn scaling(x: f64, y: f64, z: f64) -> Matrix {
     ])
 }
 
-pub fn rotation_x(r: f64) -> Matrix {
-    Matrix::new([
+pub fn rotation_x(r: f64) -> Transform {
+    Transform::new([
         [1.0, 0.0, 0.0, 0.0],
         [0.0, r.cos(), -r.sin(), 0.0],
         [0.0, r.sin(), r.cos(), 0.0],
@@ -27,8 +27,8 @@ pub fn rotation_x(r: f64) -> Matrix {
     ])
 }
 
-pub fn rotation_y(r: f64) -> Matrix {
-    Matrix::new([
+pub fn rotation_y(r: f64) -> Transform {
+    Transform::new([
         [r.cos(), 0.0, r.sin(), 0.0],
         [0.0, 1.0, 0.0, 0.0],
         [-r.sin(), 0.0, r.cos(), 0.0],
@@ -36,8 +36,8 @@ pub fn rotation_y(r: f64) -> Matrix {
     ])
 }
 
-pub fn rotation_z(r: f64) -> Matrix {
-    Matrix::new([
+pub fn rotation_z(r: f64) -> Transform {
+    Transform::new([
         [r.cos(), -r.sin(), 0.0, 0.0],
         [r.sin(), r.cos(), 0.0, 0.0],
         [0.0, 0.0, 1.0, 0.0],
@@ -52,8 +52,8 @@ pub fn shearing(
     y_by_z: f64,
     z_by_x: f64,
     z_by_y: f64,
-) -> Matrix {
-    Matrix::new([
+) -> Transform {
+    Transform::new([
         [1.0, x_by_y, x_by_z, 0.0],
         [y_by_x, 1.0, y_by_z, 0.0],
         [z_by_x, z_by_y, 1.0, 0.0],
@@ -63,12 +63,14 @@ pub fn shearing(
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct Builder {
-    current: Matrix,
+    current: Transform,
 }
 
 impl Builder {
     pub fn new() -> Self {
-        Builder { current: IDENTITY }
+        Builder {
+            current: Transform::identity(),
+        }
     }
 
     pub fn translation(self, x: f64, y: f64, z: f64) -> Builder {
@@ -115,7 +117,7 @@ impl Builder {
         }
     }
 
-    pub fn transformation(&self) -> Matrix {
+    pub fn transformation(&self) -> Transform {
         self.current
     }
 }

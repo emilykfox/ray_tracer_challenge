@@ -1,7 +1,7 @@
 use crate::{Point, Vector, EQUALITY_EPSILON};
 
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
-struct MatrixIndexError;
+pub struct MatrixIndexError;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Matrix<const M: usize, const N: usize> {
@@ -294,21 +294,21 @@ impl From<Vector> for Matrix<4, 1> {
 
 impl From<Matrix<4, 1>> for Point {
     fn from(value: Matrix<4, 1>) -> Self {
-        Point {
-            x: value.entries[0][0],
-            y: value.entries[1][0],
-            z: value.entries[2][0],
-        }
+        Point::new(
+            value.entries[0][0],
+            value.entries[1][0],
+            value.entries[2][0],
+        )
     }
 }
 
 impl From<Matrix<4, 1>> for Vector {
     fn from(value: Matrix<4, 1>) -> Self {
-        Vector {
-            x: value.entries[0][0],
-            y: value.entries[1][0],
-            z: value.entries[2][0],
-        }
+        Vector::new(
+            value.entries[0][0],
+            value.entries[1][0],
+            value.entries[2][0],
+        )
     }
 }
 
@@ -350,7 +350,7 @@ mod test {
 
     #[test]
     fn construct_matrix() {
-        let m = Matrix::new([
+        let m = Transform::new([
             [1.0, 2.0, 3.0, 4.0],
             [5.5, 6.5, 7.5, 8.5],
             [9.0, 10.0, 11.0, 12.0],
@@ -387,13 +387,13 @@ mod test {
 
     #[test]
     fn matrix_equality() {
-        let a = Matrix::new([
+        let a = Transform::new([
             [1.0, 2.0, 3.0, 4.0],
             [5.0, 6.0, 7.0, 8.0],
             [9.0, 8.0, 7.0, 6.0],
             [5.0, 4.0, 3.0, 2.0],
         ]);
-        let b = Matrix::new([
+        let b = Transform::new([
             [1.0, 2.0, 3.0, 4.0],
             [5.0, 6.0, 7.0, 8.0],
             [9.0, 8.0, 7.0, 6.0],
@@ -404,13 +404,13 @@ mod test {
 
     #[test]
     fn matrix_inequality() {
-        let a = Matrix::new([
+        let a = Transform::new([
             [1.0, 2.0, 3.0, 4.0],
             [5.0, 6.0, 7.0, 8.0],
             [9.0, 8.0, 7.0, 6.0],
             [5.0, 4.0, 3.0, 2.0],
         ]);
-        let b = Matrix::new([
+        let b = Transform::new([
             [2.0, 3.0, 4.0, 5.0],
             [6.0, 7.0, 8.0, 9.0],
             [8.0, 7.0, 6.0, 5.0],
@@ -437,19 +437,19 @@ mod test {
 
     #[test]
     fn matrix_multiplication() {
-        let a = Matrix::new([
+        let a = Transform::new([
             [1.0, 2.0, 3.0, 4.0],
             [5.0, 6.0, 7.0, 8.0],
             [9.0, 8.0, 7.0, 6.0],
             [5.0, 4.0, 3.0, 2.0],
         ]);
-        let b = Matrix::new([
+        let b = Transform::new([
             [-2.0, 1.0, 2.0, 3.0],
             [3.0, 2.0, 1.0, -1.0],
             [4.0, 3.0, 6.0, 5.0],
             [1.0, 2.0, 7.0, 8.0],
         ]);
-        let product = Matrix::new([
+        let product = Transform::new([
             [20.0, 22.0, 50.0, 48.0],
             [44.0, 54.0, 114.0, 108.0],
             [40.0, 58.0, 110.0, 102.0],
@@ -460,7 +460,7 @@ mod test {
 
     #[test]
     fn matrix_multiply_point() {
-        let a = Matrix::new([
+        let a = Transform::new([
             [1.0, 2.0, 3.0, 4.0],
             [2.0, 4.0, 4.0, 2.0],
             [8.0, 6.0, 4.0, 1.0],
@@ -472,7 +472,7 @@ mod test {
 
     #[test]
     fn matrix_multiply_vertex() {
-        let a = Matrix::new([
+        let a = Transform::new([
             [1.0, 2.0, 3.0, 4.0],
             [2.0, 4.0, 4.0, 2.0],
             [8.0, 6.0, 4.0, 1.0],
@@ -484,7 +484,7 @@ mod test {
 
     #[test]
     fn matrix_multiply_error() {
-        let a = Matrix::new([
+        let a = Transform::new([
             [1.0, 2.0, 3.0, 4.0],
             [2.0, 4.0, 4.0, 2.0],
             [8.0, 6.0, 4.0, 1.0],
@@ -498,30 +498,30 @@ mod test {
 
     #[test]
     fn matrix_times_identity() {
-        let a = Matrix::new([
+        let a = Transform::new([
             [0.0, 1.0, 2.0, 4.0],
             [1.0, 2.0, 4.0, 8.0],
             [2.0, 4.0, 8.0, 16.0],
             [4.0, 8.0, 16.0, 32.0],
         ]);
-        assert_eq!(a * Matrix::identity(), a);
+        assert_eq!(a * Transform::identity(), a);
     }
 
     #[test]
     fn identity_times_point() {
         let a = Point::new(1.0, 2.0, 3.0);
-        assert_eq!(Matrix::identity() * a, Ok(a));
+        assert_eq!(Transform::identity() * a, Ok(a));
     }
 
     #[test]
     fn identity_times_vector() {
         let a = Vector::new(1.0, 2.0, 3.0);
-        assert_eq!(Matrix::identity() * a, Ok(a));
+        assert_eq!(Transform::identity() * a, Ok(a));
     }
 
     #[test]
     fn transpose() {
-        let a = Matrix::new([
+        let a = Transform::new([
             [0.0, 9.0, 3.0, 0.0],
             [9.0, 8.0, 0.0, 8.0],
             [1.0, 8.0, 5.0, 3.0],
@@ -529,7 +529,7 @@ mod test {
         ]);
         assert_eq!(
             a.transpose(),
-            Matrix::new([
+            Transform::new([
                 [0.0, 9.0, 1.0, 0.0],
                 [9.0, 8.0, 8.0, 0.0],
                 [3.0, 0.0, 5.0, 5.0],
@@ -540,7 +540,7 @@ mod test {
 
     #[test]
     fn transpose_identity() {
-        assert_eq!(Matrix::identity().transpose(), Matrix::identity());
+        assert_eq!(Transform::identity().transpose(), Transform::identity());
     }
 
     #[test]
@@ -560,7 +560,7 @@ mod test {
 
     #[test]
     fn submatrix_of_4x4() {
-        let a = Matrix::new([
+        let a = Transform::new([
             [-6.0, 1.0, 1.0, 6.0],
             [-8.0, 5.0, 8.0, 6.0],
             [-1.0, 0.0, 8.0, 2.0],
@@ -604,7 +604,7 @@ mod test {
 
     #[test]
     fn determinant_of_4x4() {
-        let a = Matrix::new([
+        let a = Transform::new([
             [-2.0, -8.0, 3.0, 5.0],
             [-3.0, 1.0, 7.0, 3.0],
             [1.0, 2.0, -9.0, 6.0],
@@ -619,7 +619,7 @@ mod test {
 
     #[test]
     fn invertible() {
-        let a = Matrix::new([
+        let a = Transform::new([
             [6.0, 4.0, 4.0, 4.0],
             [5.0, 5.0, 7.0, 6.0],
             [4.0, -9.0, 3.0, -7.0],
@@ -631,7 +631,7 @@ mod test {
 
     #[test]
     fn not_invertible() {
-        let a = Matrix::new([
+        let a = Transform::new([
             [-4.0, 2.0, -2.0, -3.0],
             [9.0, 6.0, 2.0, 6.0],
             [0.0, -5.0, 1.0, -5.0],
@@ -643,7 +643,7 @@ mod test {
 
     #[test]
     fn inverse() {
-        let a = Matrix::new([
+        let a = Transform::new([
             [-5.0, 2.0, 6.0, -8.0],
             [1.0, -5.0, 1.0, 8.0],
             [7.0, 7.0, -6.0, -7.0],
@@ -657,7 +657,7 @@ mod test {
         assert_eq!(b[[2, 3]], 105.0 / 532.0);
         assert_eq!(
             b,
-            Matrix::new([
+            Transform::new([
                 [0.21805, 0.45113, 0.24060, -0.04511],
                 [-0.80827, -1.45677, -0.44361, 0.52068],
                 [-0.07895, -0.22368, -0.05263, 0.19737],
@@ -668,7 +668,7 @@ mod test {
 
     #[test]
     fn inverse2() {
-        let a = Matrix::new([
+        let a = Transform::new([
             [8.0, -5.0, 9.0, 2.0],
             [7.0, 5.0, 6.0, 1.0],
             [-6.0, 0.0, 9.0, 6.0],
@@ -676,7 +676,7 @@ mod test {
         ]);
         assert_eq!(
             a.inverse(),
-            Ok(Matrix::new([
+            Ok(Transform::new([
                 [-0.15385, -0.15385, -0.28205, -0.53846],
                 [-0.07692, 0.12308, 0.02564, 0.03077],
                 [0.35897, 0.35897, 0.43590, 0.92308],
@@ -687,7 +687,7 @@ mod test {
 
     #[test]
     fn inverse3() {
-        let a = Matrix::new([
+        let a = Transform::new([
             [9.0, 3.0, 0.0, 9.0],
             [-5.0, -2.0, -6.0, -3.0],
             [-4.0, 9.0, 6.0, 4.0],
@@ -695,7 +695,7 @@ mod test {
         ]);
         assert_eq!(
             a.inverse(),
-            Ok(Matrix::new([
+            Ok(Transform::new([
                 [-0.04074, -0.07778, 0.14444, -0.22222],
                 [-0.07778, 0.03333, 0.36667, -0.33333],
                 [-0.02901, -0.14630, -0.10926, 0.12963],
@@ -706,13 +706,13 @@ mod test {
 
     #[test]
     fn inverse_is_inverse() {
-        let a = Matrix::new([
+        let a = Transform::new([
             [3.0, -9.0, 7.0, 3.0],
             [3.0, -8.0, 2.0, -9.0],
             [-4.0, 4.0, 4.0, 1.0],
             [-6.0, 5.0, -1.0, 1.0],
         ]);
-        let b = Matrix::new([
+        let b = Transform::new([
             [8.0, 2.0, 2.0, 2.0],
             [3.0, -1.0, 7.0, 0.0],
             [7.0, 0.0, 5.0, 4.0],
@@ -724,7 +724,7 @@ mod test {
 
     #[test]
     fn fail_to_invert() {
-        let a = Matrix::new([
+        let a = Transform::new([
             [-4.0, 2.0, -2.0, -3.0],
             [9.0, 6.0, 2.0, 6.0],
             [0.0, -5.0, 1.0, -5.0],
