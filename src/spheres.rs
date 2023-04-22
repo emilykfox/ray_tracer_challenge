@@ -54,6 +54,10 @@ impl Sphere {
             ]))
         }
     }
+
+    pub fn normal_at(&self, point: Point) -> Vector {
+        point - Point::new(0.0, 0.0, 0.0)
+    }
 }
 
 #[cfg(test)]
@@ -156,5 +160,55 @@ mod test {
         s.set_transform(translation(5.0, 0.0, 0.0));
         let xs = s.intersect(r).expect("intersecting sphere error");
         assert_eq!(xs.len(), 0);
+    }
+
+    #[test]
+    fn normal_on_x_axis() {
+        let s = Sphere::new();
+        let n = s.normal_at(Point::new(1.0, 0.0, 0.0));
+        assert_eq!(n, Vector::new(1.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn normal_on_y_axis() {
+        let s = Sphere::new();
+        let n = s.normal_at(Point::new(0.0, 1.0, 0.0));
+        assert_eq!(n, Vector::new(0.0, 1.0, 0.0));
+    }
+
+    #[test]
+    fn normal_on_z_axis() {
+        let s = Sphere::new();
+        let n = s.normal_at(Point::new(0.0, 0.0, 1.0));
+        assert_eq!(n, Vector::new(0.0, 0.0, 1.0));
+    }
+
+    #[test]
+    fn normal_nonaxial() {
+        let s = Sphere::new();
+        let n = s.normal_at(Point::new(
+            3.0_f64.sqrt() / 3.0,
+            3.0_f64.sqrt() / 3.0,
+            3.0_f64.sqrt() / 3.0,
+        ));
+        assert_eq!(
+            n,
+            Vector::new(
+                3.0_f64.sqrt() / 3.0,
+                3.0_f64.sqrt() / 3.0,
+                3.0_f64.sqrt() / 3.0
+            )
+        );
+    }
+
+    #[test]
+    fn normal_is_normalized() {
+        let s = Sphere::new();
+        let n = s.normal_at(Point::new(
+            3.0_f64.sqrt() / 3.0,
+            3.0_f64.sqrt() / 3.0,
+            3.0_f64.sqrt() / 3.0,
+        ));
+        assert_eq!(n, n.normalize());
     }
 }
