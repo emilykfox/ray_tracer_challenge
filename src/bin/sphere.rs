@@ -4,7 +4,7 @@ use ray_tracer_challenge::{
     material::{lighting, Material},
     rays::Ray,
     spheres::Sphere,
-    transformations::{translation, Builder},
+    transformations::Builder,
     Point,
 };
 
