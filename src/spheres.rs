@@ -1,5 +1,6 @@
 use crate::{
     intersections::{Intersection, Intersections},
+    material::Material,
     matrices::{Matrix, Transform},
     rays::Ray,
     Point, Vector,
@@ -7,6 +8,7 @@ use crate::{
 
 #[derive(Default, Debug, Copy, Clone, PartialEq)]
 pub struct Sphere {
+    pub material: Material,
     transform: Transform,
     inverse: Option<Transform>,
 }
@@ -20,6 +22,7 @@ pub enum IntersectingSphereError {
 impl Sphere {
     pub fn new() -> Sphere {
         Sphere {
+            material: Material::default(),
             transform: Transform::identity(),
             inverse: Some(Transform::identity()),
         }
@@ -255,5 +258,21 @@ mod test {
             .normal_at(Point::new(0.0, 2_f64.sqrt() / 2.0, -(2_f64.sqrt()) / 2.0))
             .unwrap();
         assert_eq!(n, Vector::new(0.0, 0.97014, -0.24254));
+    }
+
+    #[test]
+    fn default_material() {
+        let s = Sphere::new();
+        let m = s.material;
+        assert_eq!(m, Material::default());
+    }
+
+    #[test]
+    fn assign_material() {
+        let mut s = Sphere::new();
+        let mut m = Material::default();
+        m.ambient = 1.0;
+        s.material = m;
+        assert_eq!(s.material, m);
     }
 }
