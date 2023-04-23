@@ -43,6 +43,10 @@ impl<'objects> Intersections<'objects> {
         self.intersections.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.intersections.is_empty()
+    }
+
     pub fn hit(&self) -> Option<Intersection<'objects>> {
         self.first_hit
     }
