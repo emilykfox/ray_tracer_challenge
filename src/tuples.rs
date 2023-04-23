@@ -116,6 +116,12 @@ impl Vector {
             a.x * b.y - a.y * b.x,
         )
     }
+
+    /// Does not check of `normal` is normalized. If not, you may get an extra
+    /// boost in the normal direction.
+    pub fn reflect(&self, normal: Vector) -> Vector {
+        *self - normal * 2.0 * Self::dot(*self, normal)
+    }
 }
 
 impl PartialEq for Vector {
@@ -358,5 +364,21 @@ mod tests {
         let b = Vector::new(2.0, 3.0, 4.0);
         assert_eq!(Vector::cross(a, b), Vector::new(-1.0, 2.0, -1.0));
         assert_eq!(Vector::cross(b, a), Vector::new(1.0, -2.0, 1.0));
+    }
+
+    #[test]
+    fn reflect_vector_45() {
+        let v = Vector::new(1.0, -1.0, 0.0);
+        let n = Vector::new(0.0, 1.0, 0.0);
+        let r = v.reflect(n);
+        assert_eq!(r, Vector::new(1.0, 1.0, 0.0));
+    }
+
+    #[test]
+    fn reflect_vector_slanted() {
+        let v = Vector::new(0.0, -1.0, 0.0);
+        let n = Vector::new(2_f64.sqrt() / 2.0, 2_f64.sqrt() / 2.0, 0.0);
+        let r = v.reflect(n);
+        assert_eq!(r, Vector::new(1.0, 0.0, 0.0));
     }
 }
