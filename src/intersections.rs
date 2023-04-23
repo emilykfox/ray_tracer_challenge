@@ -1,31 +1,9 @@
 use crate::spheres::Sphere;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Intersection<'object> {
     t: f64,
     object: &'object Sphere,
-}
-
-impl PartialEq for Intersection<'_> {
-    fn eq(&self, other: &Self) -> bool {
-        self.t.total_cmp(&other.t).is_eq()
-    }
-}
-
-impl Eq for Intersection<'_> {
-    fn assert_receiver_is_total_eq(&self) {}
-}
-
-impl PartialOrd for Intersection<'_> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.t.total_cmp(&other.t))
-    }
-}
-
-impl Ord for Intersection<'_> {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.partial_cmp(other).expect("partial ordering")
-    }
 }
 
 impl<'object> Intersection<'object> {
@@ -44,36 +22,20 @@ impl<'object> Intersection<'object> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Intersections<'objects> {
-    pub intersections: Vec<Intersection<'objects>>,
+    pub vec: Vec<Intersection<'objects>>,
 }
 
 impl<'objects> Intersections<'objects> {
-    pub fn new(intersections: Vec<Intersection<'objects>>) -> Self {
-        Intersections { intersections }
-    }
-
-    pub fn len(&self) -> usize {
-        self.intersections.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.intersections.is_empty()
+    pub fn new(vec: Vec<Intersection<'objects>>) -> Self {
+        Intersections { vec }
     }
 
     pub fn hit(&self) -> Option<Intersection<'objects>> {
-        self.intersections
+        self.vec
             .iter()
             .filter(|intersection| intersection.t() >= 0.0)
             .min_by(|x, y| x.t().total_cmp(&y.t()))
             .copied()
-    }
-}
-
-impl<'objects> std::ops::Index<usize> for Intersections<'objects> {
-    type Output = Intersection<'objects>;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.intersections[index]
     }
 }
 
@@ -97,9 +59,9 @@ mod test {
         let i1 = Intersection::new(1.0, &s);
         let i2 = Intersection::new(2.0, &s);
         let xs = Intersections::new(vec![i1, i2]);
-        assert_eq!(xs.len(), 2);
-        assert_eq!(xs[0].t(), 1.0);
-        assert_eq!(xs[1].t(), 2.0);
+        assert_eq!(xs.vec.len(), 2);
+        assert_eq!(xs.vec[0].t(), 1.0);
+        assert_eq!(xs.vec[1].t(), 2.0);
     }
 
     #[test]

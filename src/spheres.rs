@@ -98,9 +98,9 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::new();
         let xs = s.intersect(r).expect("intersecting sphere error");
-        assert_eq!(xs.len(), 2);
-        assert_eq!(xs[0].t(), 4.0);
-        assert_eq!(xs[1].t(), 6.0);
+        assert_eq!(xs.vec.len(), 2);
+        assert_eq!(xs.vec[0].t(), 4.0);
+        assert_eq!(xs.vec[1].t(), 6.0);
     }
 
     #[test]
@@ -108,9 +108,9 @@ mod test {
         let r = Ray::new(Point::new(0.0, 1.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::new();
         let xs = s.intersect(r).expect("intersecting sphere error");
-        assert_eq!(xs.len(), 2);
-        assert_eq!(xs[0].t(), 5.0);
-        assert_eq!(xs[1].t(), 5.0);
+        assert_eq!(xs.vec.len(), 2);
+        assert_eq!(xs.vec[0].t(), 5.0);
+        assert_eq!(xs.vec[1].t(), 5.0);
     }
 
     #[test]
@@ -118,7 +118,7 @@ mod test {
         let r = Ray::new(Point::new(0.0, 2.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::new();
         let xs = s.intersect(r).expect("intersecting sphere error");
-        assert_eq!(xs.len(), 0);
+        assert_eq!(xs.vec.len(), 0);
     }
 
     #[test]
@@ -126,9 +126,9 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::new();
         let xs = s.intersect(r).expect("intersecting sphere error");
-        assert_eq!(xs.len(), 2);
-        assert_eq!(xs[0].t(), -1.0);
-        assert_eq!(xs[1].t(), 1.0);
+        assert_eq!(xs.vec.len(), 2);
+        assert_eq!(xs.vec[0].t(), -1.0);
+        assert_eq!(xs.vec[1].t(), 1.0);
     }
 
     #[test]
@@ -136,9 +136,9 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, 5.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::new();
         let xs = s.intersect(r).expect("intersecting sphere error");
-        assert_eq!(xs.len(), 2);
-        assert_eq!(xs[0].t(), -6.0);
-        assert_eq!(xs[1].t(), -4.0);
+        assert_eq!(xs.vec.len(), 2);
+        assert_eq!(xs.vec[0].t(), -6.0);
+        assert_eq!(xs.vec[1].t(), -4.0);
     }
 
     #[test]
@@ -146,9 +146,9 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::new();
         let xs = s.intersect(r).expect("intersecting sphere error");
-        assert_eq!(xs.len(), 2);
-        assert_eq!(xs[0].object(), &s);
-        assert_eq!(xs[1].object(), &s);
+        assert_eq!(xs.vec.len(), 2);
+        assert_eq!(xs.vec[0].object(), &s);
+        assert_eq!(xs.vec[1].object(), &s);
     }
 
     #[test]
@@ -171,9 +171,9 @@ mod test {
         let mut s = Sphere::new();
         s.set_transform(scaling(2.0, 2.0, 2.0));
         let xs = s.intersect(r).expect("intersecting sphere error");
-        assert_eq!(xs.len(), 2);
-        assert_eq!(xs[0].t(), 3.0);
-        assert_eq!(xs[1].t(), 7.0);
+        assert_eq!(xs.vec.len(), 2);
+        assert_eq!(xs.vec[0].t(), 3.0);
+        assert_eq!(xs.vec[1].t(), 7.0);
     }
 
     #[test]
@@ -182,7 +182,7 @@ mod test {
         let mut s = Sphere::new();
         s.set_transform(translation(5.0, 0.0, 0.0));
         let xs = s.intersect(r).expect("intersecting sphere error");
-        assert_eq!(xs.len(), 0);
+        assert_eq!(xs.vec.len(), 0);
     }
 
     #[test]
