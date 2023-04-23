@@ -117,7 +117,7 @@ impl Builder {
         }
     }
 
-    pub fn transformation(&self) -> Transform {
+    pub fn transform(&self) -> Transform {
         self.current
     }
 }
@@ -309,7 +309,7 @@ mod test {
             .scaling(5.0, 5.0, 5.0)
             .translation(10.0, 5.0, 7.0)
             .shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0)
-            .transformation();
+            .transform();
         assert_eq!(t * p, Ok(Point::new(15.0, 15.0, 7.0)));
     }
 }

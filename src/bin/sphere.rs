@@ -27,7 +27,7 @@ fn main() -> std::io::Result<()> {
     let transform = Builder::new()
         .shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         .scaling(1.0, 0.8, 0.7)
-        .transformation();
+        .transform();
     sphere.set_transform(transform);
 
     let light_position = Point::new(8.0, 10.0, -10.0);
