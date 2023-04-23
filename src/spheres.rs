@@ -1,6 +1,6 @@
 use crate::{
     intersections::{Intersection, Intersections},
-    matrices::Transform,
+    matrices::{Matrix, Transform},
     rays::Ray,
     Point, Vector,
 };
@@ -55,8 +55,26 @@ impl Sphere {
         }
     }
 
-    pub fn normal_at(&self, point: Point) -> Vector {
-        let object_point = self.inverse * point;
+    pub fn normal_at(&self, point: Point) -> Result<Vector, IntersectingSphereError> {
+        let inverse = self.inverse.ok_or(IntersectingSphereError::NoInverse)?;
+        let object_point = (inverse * point).map_err(|_| IntersectingSphereError::CastingMatrix)?;
+        let object_normal = object_point - Point::new(0.0, 0.0, 0.0);
+        let object_normal_matrix = Matrix::new([
+            [object_normal.x()],
+            [object_normal.y()],
+            [object_normal.z()],
+        ]);
+        let world_normal_matrix = inverse
+            .submatrix(3, 3)
+            .expect("matrix index error")
+            .transpose()
+            * object_normal_matrix;
+        Ok(Vector::new(
+            world_normal_matrix[[0, 0]],
+            world_normal_matrix[[1, 0]],
+            world_normal_matrix[[2, 0]],
+        )
+        .normalize())
     }
 }
 
@@ -167,32 +185,34 @@ mod test {
     #[test]
     fn normal_on_x_axis() {
         let s = Sphere::new();
-        let n = s.normal_at(Point::new(1.0, 0.0, 0.0));
+        let n = s.normal_at(Point::new(1.0, 0.0, 0.0)).unwrap();
         assert_eq!(n, Vector::new(1.0, 0.0, 0.0));
     }
 
     #[test]
     fn normal_on_y_axis() {
         let s = Sphere::new();
-        let n = s.normal_at(Point::new(0.0, 1.0, 0.0));
+        let n = s.normal_at(Point::new(0.0, 1.0, 0.0)).unwrap();
         assert_eq!(n, Vector::new(0.0, 1.0, 0.0));
     }
 
     #[test]
     fn normal_on_z_axis() {
         let s = Sphere::new();
-        let n = s.normal_at(Point::new(0.0, 0.0, 1.0));
+        let n = s.normal_at(Point::new(0.0, 0.0, 1.0)).unwrap();
         assert_eq!(n, Vector::new(0.0, 0.0, 1.0));
     }
 
     #[test]
     fn normal_nonaxial() {
         let s = Sphere::new();
-        let n = s.normal_at(Point::new(
-            3.0_f64.sqrt() / 3.0,
-            3.0_f64.sqrt() / 3.0,
-            3.0_f64.sqrt() / 3.0,
-        ));
+        let n = s
+            .normal_at(Point::new(
+                3.0_f64.sqrt() / 3.0,
+                3.0_f64.sqrt() / 3.0,
+                3.0_f64.sqrt() / 3.0,
+            ))
+            .unwrap();
         assert_eq!(
             n,
             Vector::new(
@@ -206,11 +226,13 @@ mod test {
     #[test]
     fn normal_is_normalized() {
         let s = Sphere::new();
-        let n = s.normal_at(Point::new(
-            3.0_f64.sqrt() / 3.0,
-            3.0_f64.sqrt() / 3.0,
-            3.0_f64.sqrt() / 3.0,
-        ));
+        let n = s
+            .normal_at(Point::new(
+                3.0_f64.sqrt() / 3.0,
+                3.0_f64.sqrt() / 3.0,
+                3.0_f64.sqrt() / 3.0,
+            ))
+            .unwrap();
         assert_eq!(n, n.normalize());
     }
 
@@ -218,7 +240,9 @@ mod test {
     fn normal_on_translated_sphere() {
         let mut s = Sphere::new();
         s.set_transform(translation(0.0, 1.0, 0.0));
-        let n = s.normal_at(Point::new(0.0, 1.0 + FRAC_1_SQRT_2, -FRAC_1_SQRT_2));
+        let n = s
+            .normal_at(Point::new(0.0, 1.0 + FRAC_1_SQRT_2, -FRAC_1_SQRT_2))
+            .unwrap();
         assert_eq!(n, Vector::new(0.0, FRAC_1_SQRT_2, -FRAC_1_SQRT_2));
     }
 
@@ -227,7 +251,9 @@ mod test {
         let mut s = Sphere::new();
         let m = scaling(1.0, 0.5, 1.0) * rotation_z(PI / 5.0);
         s.set_transform(m);
-        let n = s.normal_at(Point::new(0.0, 2_f64.sqrt() / 2.0, -(2_f64.sqrt()) / 2.0));
+        let n = s
+            .normal_at(Point::new(0.0, 2_f64.sqrt() / 2.0, -(2_f64.sqrt()) / 2.0))
+            .unwrap();
         assert_eq!(n, Vector::new(0.0, 0.97014, -0.24254));
     }
 }
