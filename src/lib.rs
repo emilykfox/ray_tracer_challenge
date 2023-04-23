@@ -7,6 +7,7 @@ pub mod rays;
 pub mod spheres;
 pub mod transformations;
 mod tuples;
+pub mod world;
 
 pub use tuples::{Point, Vector};
 
