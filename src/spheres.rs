@@ -270,8 +270,10 @@ mod test {
     #[test]
     fn assign_material() {
         let mut s = Sphere::new();
-        let mut m = Material::default();
-        m.ambient = 1.0;
+        let m = Material {
+            ambient: 1.0,
+            ..Material::default()
+        };
         s.material = m;
         assert_eq!(s.material, m);
     }
