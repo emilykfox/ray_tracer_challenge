@@ -1,9 +1,31 @@
 use crate::spheres::Sphere;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone)]
 pub struct Intersection<'object> {
     t: f64,
     object: &'object Sphere,
+}
+
+impl PartialEq for Intersection<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.t.total_cmp(&other.t).is_eq()
+    }
+}
+
+impl Eq for Intersection<'_> {
+    fn assert_receiver_is_total_eq(&self) {}
+}
+
+impl PartialOrd for Intersection<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.t.total_cmp(&other.t))
+    }
+}
+
+impl Ord for Intersection<'_> {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.partial_cmp(other).expect("partial ordering")
+    }
 }
 
 impl<'object> Intersection<'object> {
