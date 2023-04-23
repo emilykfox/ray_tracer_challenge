@@ -1,4 +1,4 @@
-const EQUALITY_EPSILON: f64 = 0.00001;
+use crate::EQUALITY_EPSILON;
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct Color {
