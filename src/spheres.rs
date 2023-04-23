@@ -1,14 +1,14 @@
 use crate::{
     intersections::{Intersection, Intersections},
-    matrices::{Matrix, IDENTITY},
+    matrices::Transform,
     rays::Ray,
     Point, Vector,
 };
 
 #[derive(Default, Debug, Copy, Clone, PartialEq)]
 pub struct Sphere {
-    transform: Matrix,
-    inverse: Option<Matrix>,
+    transform: Transform,
+    inverse: Option<Transform>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -20,12 +20,12 @@ pub enum IntersectingSphereError {
 impl Sphere {
     pub fn new() -> Sphere {
         Sphere {
-            transform: IDENTITY,
-            inverse: Some(IDENTITY),
+            transform: Transform::identity(),
+            inverse: Some(Transform::identity()),
         }
     }
 
-    pub fn set_transform(&mut self, transform: Matrix) {
+    pub fn set_transform(&mut self, transform: Transform) {
         self.transform = transform;
         self.inverse = transform.inverse().ok();
     }
@@ -131,7 +131,7 @@ mod test {
     #[test]
     fn default_transform() {
         let s = Sphere::new();
-        assert_eq!(s.transform, IDENTITY);
+        assert_eq!(s.transform, Transform::identity());
     }
 
     #[test]
