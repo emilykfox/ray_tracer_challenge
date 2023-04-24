@@ -1,4 +1,4 @@
-use crate::matrices::Transform;
+use crate::{matrices::Transform, Point, Vector};
 
 pub fn translation(x: f64, y: f64, z: f64) -> Transform {
     Transform::new([
@@ -59,6 +59,22 @@ pub fn shearing(
         [z_by_x, z_by_y, 1.0, 0.0],
         [0.0, 0.0, 0.0, 1.0],
     ])
+}
+
+pub fn view_transform(from: Point, to: Point, up: Vector) -> Transform {
+    let forward = (to - from).normalize();
+    let upn = up.normalize();
+    let left = Vector::cross(forward, upn);
+    let true_up = Vector::cross(left, forward);
+
+    let orientation = Transform::new([
+        [left.x, left.y, left.z, 0.0],
+        [true_up.x, true_up.y, true_up.z, 0.0],
+        [-forward.x, -forward.y, -forward.z, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]);
+
+    orientation * translation(-from.x, -from.y, -from.z)
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
@@ -311,5 +327,49 @@ mod test {
             .shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0)
             .transform();
         assert_eq!(t * p, Ok(Point::new(15.0, 15.0, 7.0)));
+    }
+
+    #[test]
+    fn default_view() {
+        let from = Point::new(0.0, 0.0, 0.0);
+        let to = Point::new(0.0, 0.0, -1.0);
+        let up = Vector::new(0.0, 1.0, 0.0);
+        let t = view_transform(from, to, up);
+        assert_eq!(t, Transform::identity());
+    }
+
+    #[test]
+    fn look_positive_z() {
+        let from = Point::new(0.0, 0.0, 0.0);
+        let to = Point::new(0.0, 0.0, 1.0);
+        let up = Vector::new(0.0, 1.0, 0.0);
+        let t = view_transform(from, to, up);
+        assert_eq!(t, scaling(-1.0, 1.0, -1.0));
+    }
+
+    #[test]
+    fn view_transformation_moves_world() {
+        let from = Point::new(0.0, 0.0, 8.0);
+        let to = Point::new(0.0, 0.0, 0.0);
+        let up = Vector::new(0.0, 1.0, 0.0);
+        let t = view_transform(from, to, up);
+        assert_eq!(t, translation(0.0, 0.0, -8.0));
+    }
+
+    #[test]
+    fn arbitrary_view_transformation() {
+        let from = Point::new(1.0, 3.0, 2.0);
+        let to = Point::new(4.0, -2.0, 8.0);
+        let up = Vector::new(1.0, 1.0, 0.0);
+        let t = view_transform(from, to, up);
+        assert_eq!(
+            t,
+            Transform::new([
+                [-0.50709, 0.50709, 0.67612, -2.36643],
+                [0.76772, 0.60609, 0.12122, -2.82843],
+                [-0.35857, 0.59761, -0.71714, 0.00000],
+                [0.00000, 0.00000, 0.00000, 1.00000],
+            ])
+        );
     }
 }
