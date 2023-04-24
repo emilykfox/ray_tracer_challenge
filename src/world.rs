@@ -25,7 +25,7 @@ impl World {
             .into_iter()
             .flat_map(|intersections| intersections.vec.into_iter())
             .collect::<Vec<Intersection>>();
-        intersections.sort_by(|x, y| x.t().total_cmp(&y.t()));
+        intersections.sort_by(|x, y| x.t.total_cmp(&y.t));
         Ok(Intersections::new(intersections))
     }
 }
@@ -79,9 +79,9 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let xs = w.intersect(r).unwrap();
         assert_eq!(xs.vec.len(), 4);
-        assert_eq!(xs.vec[0].t(), 4.0);
-        assert_eq!(xs.vec[1].t(), 4.5);
-        assert_eq!(xs.vec[2].t(), 5.5);
-        assert_eq!(xs.vec[3].t(), 6.0);
+        assert_eq!(xs.vec[0].t, 4.0);
+        assert_eq!(xs.vec[1].t, 4.5);
+        assert_eq!(xs.vec[2].t, 5.5);
+        assert_eq!(xs.vec[3].t, 6.0);
     }
 }

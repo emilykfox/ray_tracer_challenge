@@ -14,8 +14,8 @@ fn main() -> std::io::Result<()> {
         point = (transform * point).unwrap();
         canvas
             .write_pixel(
-                (200.0 + point.x()) as usize,
-                (200.0 - point.y()) as usize,
+                (200.0 + point.x) as usize,
+                (200.0 - point.y) as usize,
                 Color::new(1.0, 1.0, 1.0),
             )
             .unwrap();

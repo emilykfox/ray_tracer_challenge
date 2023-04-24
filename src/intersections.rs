@@ -2,21 +2,13 @@ use crate::spheres::Sphere;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Intersection<'object> {
-    t: f64,
-    object: &'object Sphere,
+    pub t: f64,
+    pub object: &'object Sphere,
 }
 
 impl<'object> Intersection<'object> {
     pub fn new(t: f64, object: &'object Sphere) -> Self {
         Intersection { t, object }
-    }
-
-    pub fn t(&self) -> f64 {
-        self.t
-    }
-
-    pub fn object(&self) -> &'object Sphere {
-        self.object
     }
 }
 
@@ -33,8 +25,8 @@ impl<'objects> Intersections<'objects> {
     pub fn hit(&self) -> Option<Intersection<'objects>> {
         self.vec
             .iter()
-            .filter(|intersection| intersection.t() >= 0.0)
-            .min_by(|x, y| x.t().total_cmp(&y.t()))
+            .filter(|intersection| intersection.t >= 0.0)
+            .min_by(|x, y| x.t.total_cmp(&y.t))
             .copied()
     }
 }
@@ -49,8 +41,8 @@ mod test {
     fn create_intersection() {
         let s = Sphere::new();
         let i = Intersection::new(3.5, &s);
-        assert_eq!(i.t(), 3.5);
-        assert_eq!(i.object(), &s);
+        assert_eq!(i.t, 3.5);
+        assert_eq!(i.object, &s);
     }
 
     #[test]
@@ -60,8 +52,8 @@ mod test {
         let i2 = Intersection::new(2.0, &s);
         let xs = Intersections::new(vec![i1, i2]);
         assert_eq!(xs.vec.len(), 2);
-        assert_eq!(xs.vec[0].t(), 1.0);
-        assert_eq!(xs.vec[1].t(), 2.0);
+        assert_eq!(xs.vec[0].t, 1.0);
+        assert_eq!(xs.vec[1].t, 2.0);
     }
 
     #[test]

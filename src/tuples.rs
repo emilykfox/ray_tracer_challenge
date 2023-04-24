@@ -3,27 +3,15 @@ use crate::EQUALITY_EPSILON;
 /// A 3-dimensional point
 #[derive(Debug, Default, Copy, Clone)]
 pub struct Point {
-    x: f64,
-    y: f64,
-    z: f64,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 
 impl Point {
     /// Returns a new `Point`
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Point { x, y, z }
-    }
-
-    pub fn x(&self) -> f64 {
-        self.x
-    }
-
-    pub fn y(&self) -> f64 {
-        self.y
-    }
-
-    pub fn z(&self) -> f64 {
-        self.z
     }
 }
 
@@ -74,9 +62,9 @@ impl std::ops::Sub<Vector> for Point {
 /// A 3-dimensional vector
 #[derive(Debug, Default, Copy, Clone)]
 pub struct Vector {
-    x: f64,
-    y: f64,
-    z: f64,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 
 impl Vector {
@@ -219,17 +207,17 @@ mod tests {
     #[test]
     fn create_points() {
         let p = Point::new(4.0, -4.0, 3.0);
-        assert_eq!(p.x(), 4.0);
-        assert_eq!(p.y(), -4.0);
-        assert_eq!(p.z(), 3.0);
+        assert_eq!(p.x, 4.0);
+        assert_eq!(p.y, -4.0);
+        assert_eq!(p.z, 3.0);
     }
 
     #[test]
     fn create_vectors() {
         let v = Vector::new(4.0, -4.0, 3.0);
-        assert_eq!(v.x(), 4.0);
-        assert_eq!(v.y(), -4.0);
-        assert_eq!(v.z(), 3.0);
+        assert_eq!(v.x, 4.0);
+        assert_eq!(v.y, -4.0);
+        assert_eq!(v.z, 3.0);
     }
 
     #[test]

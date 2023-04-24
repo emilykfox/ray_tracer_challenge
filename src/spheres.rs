@@ -38,10 +38,10 @@ impl Sphere {
         let ray2 = ray
             .transformed(inverse)
             .map_err(|_| IntersectingSphereError::CastingMatrix)?;
-        let sphere_to_ray = ray2.origin() - Point::new(0.0, 0.0, 0.0);
+        let sphere_to_ray = ray2.origin - Point::new(0.0, 0.0, 0.0);
 
-        let a = Vector::dot(ray2.direction(), ray2.direction());
-        let b = 2.0 * Vector::dot(ray2.direction(), sphere_to_ray);
+        let a = Vector::dot(ray2.direction, ray2.direction);
+        let b = 2.0 * Vector::dot(ray2.direction, sphere_to_ray);
         let c = Vector::dot(sphere_to_ray, sphere_to_ray) - 1.0;
 
         let discriminant = b * b - 4.0 * a * c;
@@ -62,11 +62,8 @@ impl Sphere {
         let inverse = self.inverse.ok_or(IntersectingSphereError::NoInverse)?;
         let object_point = (inverse * point).map_err(|_| IntersectingSphereError::CastingMatrix)?;
         let object_normal = object_point - Point::new(0.0, 0.0, 0.0);
-        let object_normal_matrix = Matrix::new([
-            [object_normal.x()],
-            [object_normal.y()],
-            [object_normal.z()],
-        ]);
+        let object_normal_matrix =
+            Matrix::new([[object_normal.x], [object_normal.y], [object_normal.z]]);
         let world_normal_matrix = inverse
             .submatrix(3, 3)
             .expect("matrix index error")
@@ -99,8 +96,8 @@ mod test {
         let s = Sphere::new();
         let xs = s.intersect(r).expect("intersecting sphere error");
         assert_eq!(xs.vec.len(), 2);
-        assert_eq!(xs.vec[0].t(), 4.0);
-        assert_eq!(xs.vec[1].t(), 6.0);
+        assert_eq!(xs.vec[0].t, 4.0);
+        assert_eq!(xs.vec[1].t, 6.0);
     }
 
     #[test]
@@ -109,8 +106,8 @@ mod test {
         let s = Sphere::new();
         let xs = s.intersect(r).expect("intersecting sphere error");
         assert_eq!(xs.vec.len(), 2);
-        assert_eq!(xs.vec[0].t(), 5.0);
-        assert_eq!(xs.vec[1].t(), 5.0);
+        assert_eq!(xs.vec[0].t, 5.0);
+        assert_eq!(xs.vec[1].t, 5.0);
     }
 
     #[test]
@@ -127,8 +124,8 @@ mod test {
         let s = Sphere::new();
         let xs = s.intersect(r).expect("intersecting sphere error");
         assert_eq!(xs.vec.len(), 2);
-        assert_eq!(xs.vec[0].t(), -1.0);
-        assert_eq!(xs.vec[1].t(), 1.0);
+        assert_eq!(xs.vec[0].t, -1.0);
+        assert_eq!(xs.vec[1].t, 1.0);
     }
 
     #[test]
@@ -137,8 +134,8 @@ mod test {
         let s = Sphere::new();
         let xs = s.intersect(r).expect("intersecting sphere error");
         assert_eq!(xs.vec.len(), 2);
-        assert_eq!(xs.vec[0].t(), -6.0);
-        assert_eq!(xs.vec[1].t(), -4.0);
+        assert_eq!(xs.vec[0].t, -6.0);
+        assert_eq!(xs.vec[1].t, -4.0);
     }
 
     #[test]
@@ -147,8 +144,8 @@ mod test {
         let s = Sphere::new();
         let xs = s.intersect(r).expect("intersecting sphere error");
         assert_eq!(xs.vec.len(), 2);
-        assert_eq!(xs.vec[0].object(), &s);
-        assert_eq!(xs.vec[1].object(), &s);
+        assert_eq!(xs.vec[0].object, &s);
+        assert_eq!(xs.vec[1].object, &s);
     }
 
     #[test]
@@ -172,8 +169,8 @@ mod test {
         s.set_transform(scaling(2.0, 2.0, 2.0));
         let xs = s.intersect(r).expect("intersecting sphere error");
         assert_eq!(xs.vec.len(), 2);
-        assert_eq!(xs.vec[0].t(), 3.0);
-        assert_eq!(xs.vec[1].t(), 7.0);
+        assert_eq!(xs.vec[0].t, 3.0);
+        assert_eq!(xs.vec[1].t, 7.0);
     }
 
     #[test]

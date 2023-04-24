@@ -42,10 +42,10 @@ fn main() -> std::io::Result<()> {
             let ray = Ray::new(ray_origin, (position - ray_origin).normalize());
             let intersections = sphere.intersect(ray).unwrap();
             if let Some(hit) = intersections.hit() {
-                let point = ray.position(hit.t());
-                let normal = hit.object().normal_at(point).unwrap();
-                let eye = -ray.direction();
-                let color = lighting(hit.object().material, light, point, eye, normal);
+                let point = ray.position(hit.t);
+                let normal = hit.object.normal_at(point).unwrap();
+                let eye = -ray.direction;
+                let color = lighting(hit.object.material, light, point, eye, normal);
                 canvas
                     .write_pixel(x, y, color)
                     .expect("unable to write pixel");

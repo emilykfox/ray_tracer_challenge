@@ -48,24 +48,21 @@ fn main() -> std::io::Result<()> {
 
     let mut num_ticks = 0;
     _ = canvas.write_pixel(
-        projectile.position.x() as usize,
-        549 - projectile.position.y() as usize,
+        projectile.position.x as usize,
+        549 - projectile.position.y as usize,
         Color::new(0.75, 0.3, 0.0),
     );
-    while projectile.position.y() > 0.0 {
+    while projectile.position.y > 0.0 {
         projectile = tick(environment, projectile);
         num_ticks += 1;
         _ = canvas.write_pixel(
-            projectile.position.x() as usize,
-            549 - projectile.position.y() as usize,
+            projectile.position.x as usize,
+            549 - projectile.position.y as usize,
             Color::new(0.75, 0.3, 0.0),
         );
         println!(
             "Projectile at ({:.2}, {:.2}, {:.2}) after {} tick(s).",
-            projectile.position.x(),
-            projectile.position.y(),
-            projectile.position.z(),
-            num_ticks
+            projectile.position.x, projectile.position.y, projectile.position.z, num_ticks
         );
     }
 

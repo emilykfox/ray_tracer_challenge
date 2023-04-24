@@ -5,7 +5,7 @@ pub struct MatrixIndexError;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Matrix<const M: usize, const N: usize> {
-    entries: [[f64; N]; M],
+    pub entries: [[f64; N]; M],
 }
 
 impl<const M: usize, const N: usize> Matrix<M, N> {
@@ -279,7 +279,7 @@ impl<const M: usize, const N: usize, const O: usize> std::ops::Mul<Matrix<N, O>>
 impl From<Point> for Matrix<4, 1> {
     fn from(value: Point) -> Self {
         Matrix {
-            entries: [[value.x()], [value.y()], [value.z()], [1.0]],
+            entries: [[value.x], [value.y], [value.z], [1.0]],
         }
     }
 }
@@ -287,7 +287,7 @@ impl From<Point> for Matrix<4, 1> {
 impl From<Vector> for Matrix<4, 1> {
     fn from(value: Vector) -> Self {
         Matrix {
-            entries: [[value.x()], [value.y()], [value.z()], [0.0]],
+            entries: [[value.x], [value.y], [value.z], [0.0]],
         }
     }
 }
