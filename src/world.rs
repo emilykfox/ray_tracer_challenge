@@ -17,6 +17,13 @@ pub struct World {
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct NoLightsourceError;
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum ColorError {
+    InsersectingSphere,
+    NoLightsource,
+    NormalTransformation,
+}
+
 impl World {
     pub fn new() -> Self {
         World::default()
@@ -47,6 +54,19 @@ impl World {
             hit_info.eyev,
             hit_info.normal,
         ))
+    }
+
+    pub fn color_from(&self, ray: Ray) -> Result<Color, ColorError> {
+        let intersections = self
+            .intersect(ray)
+            .map_err(|_| ColorError::InsersectingSphere)?;
+        let hit = intersections.hit();
+        let Some(hit) = hit else {
+            return Ok(Color::default());
+        };
+        let hit_info = HitInfo::prepare(hit, ray).map_err(|_| ColorError::NormalTransformation)?;
+        self.shade_hit(hit_info)
+            .map_err(|_| ColorError::NoLightsource)
     }
 }
 
@@ -201,5 +221,34 @@ mod test {
         let hit_info = HitInfo::prepare(i, r).unwrap();
         let c = w.shade_hit(hit_info);
         assert_eq!(c, Ok(Color::new(0.90498, 0.90498, 0.90498)));
+    }
+
+    #[test]
+    fn color_from_miss() {
+        let w = default_world();
+        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 1.0, 0.0));
+        let c = w.color_from(r).unwrap();
+        assert_eq!(c, Color::new(0.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn color_from_hit() {
+        let w = default_world();
+        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let c = w.color_from(r).unwrap();
+        assert_eq!(c, Color::new(0.38066, 0.47583, 0.2855));
+    }
+
+    #[test]
+    fn color_with_intersection_behind_ray() {
+        let mut w = default_world();
+        let outer = &mut w.objects[0];
+        outer.material.ambient = 1.0;
+        let inner = &mut w.objects[1];
+        inner.material.ambient = 1.0;
+        let inner = &w.objects[1];
+        let r = Ray::new(Point::new(0.0, 0.0, 0.75), Vector::new(0.0, 0.0, -1.0));
+        let c = w.color_from(r).unwrap();
+        assert_eq!(c, inner.material.color);
     }
 }
