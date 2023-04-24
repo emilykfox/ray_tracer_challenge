@@ -3,6 +3,7 @@ use crate::{
     lights::PointLight,
     rays::Ray,
     spheres::{IntersectingSphereError, Sphere},
+    Point, Vector,
 };
 
 #[derive(Default, Debug, Clone, PartialEq)]
@@ -27,6 +28,40 @@ impl World {
             .collect::<Vec<Intersection>>();
         intersections.sort_by(|x, y| x.t.total_cmp(&y.t));
         Ok(Intersections::new(intersections))
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub struct HitInfo<'object> {
+    pub t: f64,
+    pub object: &'object Sphere,
+    pub point: Point,
+    pub eyev: Vector,
+    pub normal: Vector,
+}
+
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
+pub struct NormalTransformationError;
+
+impl<'object> HitInfo<'object> {
+    pub fn prepare(
+        intersection: Intersection<'object>,
+        ray: Ray,
+    ) -> Result<Self, NormalTransformationError> {
+        let t = intersection.t;
+        let object = intersection.object;
+        let point = ray.position(t);
+        let eyev = -ray.direction;
+        let normal = object
+            .normal_at(point)
+            .map_err(|_| NormalTransformationError)?;
+        Ok(HitInfo {
+            t,
+            object,
+            point,
+            eyev,
+            normal,
+        })
     }
 }
 
@@ -83,5 +118,18 @@ mod test {
         assert_eq!(xs.vec[1].t, 4.5);
         assert_eq!(xs.vec[2].t, 5.5);
         assert_eq!(xs.vec[3].t, 6.0);
+    }
+
+    #[test]
+    fn create_hit_info() {
+        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let shape = Sphere::new();
+        let i = Intersection::new(4.0, &shape);
+        let hit_info = HitInfo::prepare(i, r).unwrap();
+        assert_eq!(hit_info.t, i.t);
+        assert_eq!(hit_info.object, &shape);
+        assert_eq!(hit_info.point, Point::new(0.0, 0.0, -1.0));
+        assert_eq!(hit_info.eyev, Vector::new(0.0, 0.0, -1.0));
+        assert_eq!(hit_info.normal, Vector::new(0.0, 0.0, -1.0));
     }
 }
