@@ -38,6 +38,7 @@ pub struct HitInfo<'object> {
     pub point: Point,
     pub eyev: Vector,
     pub normal: Vector,
+    pub inside: bool,
 }
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
@@ -52,15 +53,18 @@ impl<'object> HitInfo<'object> {
         let object = intersection.object;
         let point = ray.position(t);
         let eyev = -ray.direction;
-        let normal = object
+        let naive_normal = object
             .normal_at(point)
             .map_err(|_| NormalTransformationError)?;
+        let inside = Vector::dot(naive_normal, eyev) < 0.0;
+        let normal = if inside { -naive_normal } else { naive_normal };
         Ok(HitInfo {
             t,
             object,
             point,
             eyev,
             normal,
+            inside,
         })
     }
 }
@@ -130,6 +134,27 @@ mod test {
         assert_eq!(hit_info.object, &shape);
         assert_eq!(hit_info.point, Point::new(0.0, 0.0, -1.0));
         assert_eq!(hit_info.eyev, Vector::new(0.0, 0.0, -1.0));
+        assert_eq!(hit_info.normal, Vector::new(0.0, 0.0, -1.0));
+    }
+
+    #[test]
+    fn hit_outside() {
+        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let shape = Sphere::new();
+        let i = Intersection::new(4.0, &shape);
+        let hit_info = HitInfo::prepare(i, r).unwrap();
+        assert!(!hit_info.inside);
+    }
+
+    #[test]
+    fn hit_inside() {
+        let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
+        let shape = Sphere::new();
+        let i = Intersection::new(1.0, &shape);
+        let hit_info = HitInfo::prepare(i, r).unwrap();
+        assert_eq!(hit_info.point, Point::new(0.0, 0.0, 1.0));
+        assert_eq!(hit_info.eyev, Vector::new(0.0, 0.0, -1.0));
+        assert!(hit_info.inside);
         assert_eq!(hit_info.normal, Vector::new(0.0, 0.0, -1.0));
     }
 }
