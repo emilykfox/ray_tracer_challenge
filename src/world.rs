@@ -1,6 +1,8 @@
 use crate::{
+    canvas::Color,
     intersections::{Intersection, Intersections},
     lights::PointLight,
+    material::lighting,
     rays::Ray,
     spheres::{IntersectingSphereError, Sphere},
     Point, Vector,
@@ -11,6 +13,9 @@ pub struct World {
     pub objects: Vec<Sphere>,
     pub light: Option<PointLight>,
 }
+
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
+pub struct NoLightsourceError;
 
 impl World {
     pub fn new() -> Self {
@@ -28,6 +33,20 @@ impl World {
             .collect::<Vec<Intersection>>();
         intersections.sort_by(|x, y| x.t.total_cmp(&y.t));
         Ok(Intersections::new(intersections))
+    }
+
+    pub fn shade_hit(&self, hit_info: HitInfo) -> Result<Color, NoLightsourceError> {
+        let Some(light) = self.light else {
+            return Err(NoLightsourceError);
+        };
+
+        Ok(lighting(
+            hit_info.object.material,
+            light,
+            hit_info.point,
+            hit_info.eyev,
+            hit_info.normal,
+        ))
     }
 }
 
@@ -156,5 +175,31 @@ mod test {
         assert_eq!(hit_info.eyev, Vector::new(0.0, 0.0, -1.0));
         assert!(hit_info.inside);
         assert_eq!(hit_info.normal, Vector::new(0.0, 0.0, -1.0));
+    }
+
+    #[test]
+    fn shading_intersection() {
+        let w = default_world();
+        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let shape = w.objects[0];
+        let i = Intersection::new(4.0, &shape);
+        let hit_info = HitInfo::prepare(i, r).unwrap();
+        let c = w.shade_hit(hit_info);
+        assert_eq!(c, Ok(Color::new(0.38066, 0.47583, 0.2855)));
+    }
+
+    #[test]
+    fn shading_intersection_from_inside() {
+        let mut w = default_world();
+        w.light = Some(PointLight::new(
+            Point::new(0.0, 0.25, 0.0),
+            Color::new(1.0, 1.0, 1.0),
+        ));
+        let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
+        let shape = w.objects[1];
+        let i = Intersection::new(0.5, &shape);
+        let hit_info = HitInfo::prepare(i, r).unwrap();
+        let c = w.shade_hit(hit_info);
+        assert_eq!(c, Ok(Color::new(0.90498, 0.90498, 0.90498)));
     }
 }
