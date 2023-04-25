@@ -35,8 +35,8 @@ pub fn lighting(
     normal: Vector,
     in_shadow: bool,
 ) -> Color {
-    let effective_color = material.color * light.intensity();
-    let lightv = (light.position() - point).normalize();
+    let effective_color = material.color * light.intensity;
+    let lightv = (light.position - point).normalize();
 
     let ambient = effective_color * material.ambient;
     if in_shadow {
@@ -58,7 +58,7 @@ pub fn lighting(
             specular = Color::default();
         } else {
             let factor = reflect_dot_eye.powf(material.shininess);
-            specular = light.intensity() * material.specular * factor;
+            specular = light.intensity * material.specular * factor;
         }
     }
 

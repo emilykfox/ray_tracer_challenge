@@ -2,8 +2,8 @@ use crate::{canvas::Color, Point};
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct PointLight {
-    position: Point,
-    intensity: Color,
+    pub position: Point,
+    pub intensity: Color,
 }
 
 impl PointLight {
@@ -12,14 +12,6 @@ impl PointLight {
             intensity,
             position,
         }
-    }
-
-    pub fn intensity(&self) -> Color {
-        self.intensity
-    }
-
-    pub fn position(&self) -> Point {
-        self.position
     }
 }
 
@@ -32,7 +24,7 @@ mod test {
         let intensity = Color::new(1.0, 1.0, 1.0);
         let position = Point::new(0.0, 0.0, 0.0);
         let light = PointLight::new(position, intensity);
-        assert_eq!(light.position(), position);
-        assert_eq!(light.intensity(), intensity);
+        assert_eq!(light.position, position);
+        assert_eq!(light.intensity, intensity);
     }
 }

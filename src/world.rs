@@ -61,7 +61,7 @@ impl World {
     }
 
     pub fn is_shadowed(&self, point: Point) -> bool {
-        let light_to_point = self.light.position() - point;
+        let light_to_point = self.light.position - point;
         let distance = light_to_point.magnitude();
         let direction = light_to_point.normalize();
 
