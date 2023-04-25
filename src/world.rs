@@ -46,6 +46,7 @@ impl World {
             hit_info.point,
             hit_info.eyev,
             hit_info.normal,
+            false,
         )
     }
 
