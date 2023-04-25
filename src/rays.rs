@@ -1,5 +1,5 @@
 use crate::{
-    matrices::{CastingMatrixError, Transform},
+    matrices::{CastingTransformError, Transform},
     tuples::{Point, Vector},
 };
 
@@ -18,7 +18,7 @@ impl Ray {
         self.origin + self.direction * t
     }
 
-    pub fn transformed(&self, transform: &Transform) -> Result<Ray, CastingMatrixError> {
+    pub fn transformed(&self, transform: &Transform) -> Result<Ray, CastingTransformError> {
         Ok(Ray {
             origin: (transform * self.origin)?,
             direction: (transform * self.direction)?,

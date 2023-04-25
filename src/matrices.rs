@@ -317,15 +317,15 @@ impl From<Matrix<4, 1>> for Vector {
 pub type Transform = Matrix<4, 4>;
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
-pub struct CastingMatrixError;
+pub struct CastingTransformError;
 
 impl std::ops::Mul<Point> for &Transform {
-    type Output = Result<Point, CastingMatrixError>;
+    type Output = Result<Point, CastingTransformError>;
 
     fn mul(self, rhs: Point) -> Self::Output {
         let product = self * &Matrix::from(rhs);
         if product[[3, 0]] != 1.0 {
-            Err(CastingMatrixError)
+            Err(CastingTransformError)
         } else {
             Ok(product.into())
         }
@@ -334,12 +334,12 @@ impl std::ops::Mul<Point> for &Transform {
 
 /// Will return `Err(CastingMatrixError)`` if enclosed `Tuple` cannot be converted to a `Vector`
 impl std::ops::Mul<Vector> for &Transform {
-    type Output = Result<Vector, CastingMatrixError>;
+    type Output = Result<Vector, CastingTransformError>;
 
     fn mul(self, rhs: Vector) -> Self::Output {
         let product = self * &Matrix::from(rhs);
         if product[[3, 0]] != 0.0 {
-            Err(CastingMatrixError)
+            Err(CastingTransformError)
         } else {
             Ok(product.into())
         }
@@ -494,8 +494,8 @@ mod test {
         ]);
         let p = Point::new(1.0, 2.0, 3.0);
         let v = Vector::new(1.0, 2.0, 3.0);
-        assert_eq!(&a * p, Err(CastingMatrixError));
-        assert_eq!(&a * v, Err(CastingMatrixError));
+        assert_eq!(&a * p, Err(CastingTransformError));
+        assert_eq!(&a * v, Err(CastingTransformError));
     }
 
     #[test]
