@@ -1,6 +1,6 @@
 use crate::matrices::Transform;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Camera {
     pub hsize: usize,
     pub vsize: usize,
