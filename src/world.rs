@@ -59,6 +59,21 @@ impl World {
         let hit_info = HitInfo::prepare(hit, ray);
         self.shade_hit(hit_info)
     }
+
+    pub fn is_shadowed(&self, point: Point) -> bool {
+        let light_to_point = self.light.position() - point;
+        let distance = light_to_point.magnitude();
+        let direction = light_to_point.normalize();
+
+        let ray = Ray::new(point, direction);
+        let intersections = self.intersect(&ray);
+        let hit = intersections.hit();
+        if let Some(hit) = hit {
+            hit.t < distance
+        } else {
+            false
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -238,5 +253,33 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, 0.75), Vector::new(0.0, 0.0, -1.0));
         let c = w.color_from(&r);
         assert_eq!(c, inner.material.color);
+    }
+
+    #[test]
+    fn no_object_on_line_shadow() {
+        let w = default_world();
+        let p = Point::new(0.0, 10.0, 0.0);
+        assert!(!w.is_shadowed(p));
+    }
+
+    #[test]
+    fn object_between_shadow() {
+        let w = default_world();
+        let p = Point::new(10.0, -10.0, 10.0);
+        assert!(w.is_shadowed(p));
+    }
+
+    #[test]
+    fn object_behind_light_shadow() {
+        let w = default_world();
+        let p = Point::new(-20.0, 20.0, -20.0);
+        assert!(!w.is_shadowed(p));
+    }
+
+    #[test]
+    fn object_other_side_shadow() {
+        let w = default_world();
+        let p = Point::new(-2.0, 2.0, -2.0);
+        assert!(!w.is_shadowed(p));
     }
 }
