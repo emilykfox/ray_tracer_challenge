@@ -1,3 +1,4 @@
+use clap::Parser;
 use std::f64::consts::PI;
 
 use ray_tracer_challenge::{
@@ -11,7 +12,21 @@ use ray_tracer_challenge::{
     Point, Vector,
 };
 
+#[derive(Parser, Debug)]
+struct Args {
+    #[arg(long, default_value = "image.ppm")]
+    output: String,
+
+    #[arg(long, default_value = "100")]
+    width: usize,
+
+    #[arg(long, default_value = "50")]
+    height: usize,
+}
+
 fn main() -> std::io::Result<()> {
+    let args = Args::parse();
+
     let mut floor = Sphere::new();
     floor.set_transform(scaling(10.0, 0.01, 10.0));
     floor.material = Material::new();
@@ -78,7 +93,7 @@ fn main() -> std::io::Result<()> {
         Color::new(1.0, 1.0, 1.0),
     ));
 
-    let mut camera = Camera::new(100, 50, PI / 3.0);
+    let mut camera = Camera::new(args.width, args.height, PI / 3.0);
     camera
         .set_transform(view_transform(
             Point::new(0.0, 1.5, -5.0),
@@ -89,10 +104,7 @@ fn main() -> std::io::Result<()> {
 
     let canvas = camera.render(&world).expect("rendering error");
 
-    let output_path = std::env::args().nth(1);
-    if let Some(output_path) = output_path {
-        std::fs::write(output_path, canvas.to_ppm())?;
-    }
+    std::fs::write(args.output, canvas.to_ppm())?;
 
     Ok(())
 }
