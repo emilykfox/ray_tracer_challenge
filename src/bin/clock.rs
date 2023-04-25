@@ -11,7 +11,7 @@ fn main() -> std::io::Result<()> {
     let transform = rotation_z(-PI / 6.0);
     let mut point = Point::new(0.0, 170.0, 0.0);
     for _ in 1..=12 {
-        point = (&transform * point).unwrap();
+        point = &transform * point;
         canvas
             .write_pixel(
                 (200.0 + point.x) as usize,

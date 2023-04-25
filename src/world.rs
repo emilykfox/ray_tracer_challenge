@@ -4,14 +4,14 @@ use crate::{
     lights::PointLight,
     material::lighting,
     rays::Ray,
-    spheres::{IntersectingSphereError, Sphere},
+    spheres::Sphere,
     Point, Vector,
 };
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct World {
     pub objects: Vec<Sphere>,
-    pub light: Option<PointLight>,
+    pub light: PointLight,
 }
 
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
@@ -29,44 +29,34 @@ impl World {
         World::default()
     }
 
-    pub fn intersect(&self, ray: &Ray) -> Result<Intersections, IntersectingSphereError> {
-        let mut intersections = self
+    pub fn intersect(&self, ray: &Ray) -> Intersections {
+        let mut vec = self
             .objects
             .iter()
-            .map(|object| object.intersect(ray))
-            .collect::<Result<Vec<Intersections>, IntersectingSphereError>>()?
-            .into_iter()
-            .flat_map(|intersections| intersections.vec.into_iter())
+            .flat_map(|object| object.intersect(ray).vec.into_iter())
             .collect::<Vec<Intersection>>();
-        intersections.sort_by(|x, y| x.t.total_cmp(&y.t));
-        Ok(Intersections::new(intersections))
+        vec.sort_by(|x, y| x.t.total_cmp(&y.t));
+        Intersections::new(vec)
     }
 
-    pub fn shade_hit(&self, hit_info: HitInfo) -> Result<Color, NoLightsourceError> {
-        let Some(ref light) = self.light else {
-            return Err(NoLightsourceError);
-        };
-
-        Ok(lighting(
+    pub fn shade_hit(&self, hit_info: HitInfo) -> Color {
+        lighting(
             &hit_info.object.material,
-            light,
+            &self.light,
             hit_info.point,
             hit_info.eyev,
             hit_info.normal,
-        ))
+        )
     }
 
-    pub fn color_from(&self, ray: &Ray) -> Result<Color, ColorError> {
-        let intersections = self
-            .intersect(ray)
-            .map_err(|_| ColorError::InsersectingSphere)?;
+    pub fn color_from(&self, ray: &Ray) -> Color {
+        let intersections = self.intersect(ray);
         let hit = intersections.hit();
         let Some(hit) = hit else {
-            return Ok(Color::default());
+            return Color::default();
         };
-        let hit_info = HitInfo::prepare(hit, ray).map_err(|_| ColorError::NormalTransformation)?;
+        let hit_info = HitInfo::prepare(hit, ray);
         self.shade_hit(hit_info)
-            .map_err(|_| ColorError::NoLightsource)
     }
 }
 
@@ -84,27 +74,22 @@ pub struct HitInfo<'object> {
 pub struct NormalTransformationError;
 
 impl<'object> HitInfo<'object> {
-    pub fn prepare(
-        intersection: &Intersection<'object>,
-        ray: &Ray,
-    ) -> Result<Self, NormalTransformationError> {
+    pub fn prepare(intersection: &Intersection<'object>, ray: &Ray) -> Self {
         let t = intersection.t;
         let object = intersection.object;
         let point = ray.position(t);
         let eyev = -ray.direction;
-        let naive_normal = object
-            .normal_at(point)
-            .map_err(|_| NormalTransformationError)?;
+        let naive_normal = object.normal_at(point);
         let inside = Vector::dot(naive_normal, eyev) < 0.0;
         let normal = if inside { -naive_normal } else { naive_normal };
-        Ok(HitInfo {
+        HitInfo {
             t,
             object,
             point,
             eyev,
             normal,
             inside,
-        })
+        }
     }
 }
 
@@ -118,10 +103,11 @@ pub(crate) fn default_world() -> World {
     s1.material.diffuse = 0.7;
     s1.material.specular = 0.2;
     let mut s2 = Sphere::new();
-    s2.set_transform(Builder::new().scaling(0.5, 0.5, 0.5).transform());
+    s2.set_transform(Builder::new().scaling(0.5, 0.5, 0.5).transform())
+        .unwrap();
     World {
         objects: vec![s1, s2],
-        light: Some(light),
+        light,
     }
 }
 
@@ -135,7 +121,7 @@ mod test {
     fn create_world() {
         let w = World::new();
         assert!(w.objects.is_empty());
-        assert_eq!(w.light, None);
+        assert_eq!(w.light, PointLight::default());
     }
 
     #[test]
@@ -146,10 +132,11 @@ mod test {
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
         let mut s2 = Sphere::new();
-        s2.set_transform(Builder::new().scaling(0.5, 0.5, 0.5).transform());
+        s2.set_transform(Builder::new().scaling(0.5, 0.5, 0.5).transform())
+            .unwrap();
 
         let w = default_world();
-        assert_eq!(w.light, Some(light));
+        assert_eq!(w.light, light);
         assert!(w.objects.contains(&s1));
         assert!(w.objects.contains(&s2));
     }
@@ -158,7 +145,7 @@ mod test {
     fn intersect_world() {
         let w = default_world();
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let xs = w.intersect(&r).unwrap();
+        let xs = w.intersect(&r);
         assert_eq!(xs.vec.len(), 4);
         assert_eq!(xs.vec[0].t, 4.0);
         assert_eq!(xs.vec[1].t, 4.5);
@@ -171,7 +158,7 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let shape = Sphere::new();
         let i = Intersection::new(4.0, &shape);
-        let hit_info = HitInfo::prepare(&i, &r).unwrap();
+        let hit_info = HitInfo::prepare(&i, &r);
         assert_eq!(hit_info.t, i.t);
         assert_eq!(hit_info.object, &shape);
         assert_eq!(hit_info.point, Point::new(0.0, 0.0, -1.0));
@@ -184,7 +171,7 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let shape = Sphere::new();
         let i = Intersection::new(4.0, &shape);
-        let hit_info = HitInfo::prepare(&i, &r).unwrap();
+        let hit_info = HitInfo::prepare(&i, &r);
         assert!(!hit_info.inside);
     }
 
@@ -193,7 +180,7 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
         let shape = Sphere::new();
         let i = Intersection::new(1.0, &shape);
-        let hit_info = HitInfo::prepare(&i, &r).unwrap();
+        let hit_info = HitInfo::prepare(&i, &r);
         assert_eq!(hit_info.point, Point::new(0.0, 0.0, 1.0));
         assert_eq!(hit_info.eyev, Vector::new(0.0, 0.0, -1.0));
         assert!(hit_info.inside);
@@ -206,31 +193,28 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let shape = &w.objects[0];
         let i = Intersection::new(4.0, shape);
-        let hit_info = HitInfo::prepare(&i, &r).unwrap();
+        let hit_info = HitInfo::prepare(&i, &r);
         let c = w.shade_hit(hit_info);
-        assert_eq!(c, Ok(Color::new(0.38066, 0.47583, 0.2855)));
+        assert_eq!(c, Color::new(0.38066, 0.47583, 0.2855));
     }
 
     #[test]
     fn shading_intersection_from_inside() {
         let mut w = default_world();
-        w.light = Some(PointLight::new(
-            Point::new(0.0, 0.25, 0.0),
-            Color::new(1.0, 1.0, 1.0),
-        ));
+        w.light = PointLight::new(Point::new(0.0, 0.25, 0.0), Color::new(1.0, 1.0, 1.0));
         let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
         let shape = &w.objects[1];
         let i = Intersection::new(0.5, shape);
-        let hit_info = HitInfo::prepare(&i, &r).unwrap();
+        let hit_info = HitInfo::prepare(&i, &r);
         let c = w.shade_hit(hit_info);
-        assert_eq!(c, Ok(Color::new(0.90498, 0.90498, 0.90498)));
+        assert_eq!(c, Color::new(0.90498, 0.90498, 0.90498));
     }
 
     #[test]
     fn color_from_miss() {
         let w = default_world();
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 1.0, 0.0));
-        let c = w.color_from(&r).unwrap();
+        let c = w.color_from(&r);
         assert_eq!(c, Color::new(0.0, 0.0, 0.0));
     }
 
@@ -238,7 +222,7 @@ mod test {
     fn color_from_hit() {
         let w = default_world();
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let c = w.color_from(&r).unwrap();
+        let c = w.color_from(&r);
         assert_eq!(c, Color::new(0.38066, 0.47583, 0.2855));
     }
 
@@ -251,7 +235,7 @@ mod test {
         inner.material.ambient = 1.0;
         let inner = &w.objects[1];
         let r = Ray::new(Point::new(0.0, 0.0, 0.75), Vector::new(0.0, 0.0, -1.0));
-        let c = w.color_from(&r).unwrap();
+        let c = w.color_from(&r);
         assert_eq!(c, inner.material.color);
     }
 }

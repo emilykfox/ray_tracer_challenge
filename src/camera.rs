@@ -1,8 +1,7 @@
 use crate::{
-    canvas::Canvas,
-    matrices::{NoInverseError, Transform},
+    canvas::{Canvas, PixelOutOfBoundsError},
+    matrices::{NoInverseError, Transform, IDENTITY},
     rays::Ray,
-    transformations::IDENTITY,
     world::World,
     Point,
 };
@@ -13,23 +12,10 @@ pub struct Camera {
     vsize: usize,
     field_of_view: f64,
     transform: Transform,
-    inverse: Option<Transform>,
+    inverse: Transform,
     half_width: f64,
     half_height: f64,
     pixel_size: f64,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum RayForPixelError {
-    PixelOutOfBounds,
-    NoInverse,
-    CastingTransform,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum RenderError {
-    RayForPixel,
-    ColorAt,
 }
 
 impl Camera {
@@ -54,19 +40,17 @@ impl Camera {
             vsize,
             field_of_view,
             transform: IDENTITY,
-            inverse: Some(IDENTITY),
+            inverse: IDENTITY,
             half_width,
             half_height,
             pixel_size,
         }
     }
 
-    pub fn ray_for_pixel(&self, x: usize, y: usize) -> Result<Ray, RayForPixelError> {
+    pub fn ray_for_pixel(&self, x: usize, y: usize) -> Result<Ray, PixelOutOfBoundsError> {
         if x > self.hsize || y > self.vsize {
-            return Err(RayForPixelError::PixelOutOfBounds);
+            return Err(PixelOutOfBoundsError);
         }
-
-        let inverse = self.inverse.as_ref().ok_or(RayForPixelError::NoInverse)?;
 
         let xoffset = (x as f64 + 0.5) * self.pixel_size;
         let yoffset = (y as f64 + 0.5) * self.pixel_size;
@@ -74,35 +58,32 @@ impl Camera {
         let world_x = self.half_width - xoffset;
         let world_y = self.half_height - yoffset;
 
-        let pixel = (inverse * Point::new(world_x, world_y, -1.0))
-            .map_err(|_| RayForPixelError::CastingTransform)?;
-        let origin = (inverse * Point::new(0.0, 0.0, 0.0))
-            .map_err(|_| RayForPixelError::CastingTransform)?;
+        let pixel = &self.inverse * Point::new(world_x, world_y, -1.0);
+        let origin = &self.inverse * Point::new(0.0, 0.0, 0.0);
         let direction = (pixel - origin).normalize();
 
         Ok(Ray::new(origin, direction))
     }
 
     pub fn set_transform(&mut self, transform: Transform) -> Result<(), NoInverseError> {
+        let inverse = transform.inverse()?;
         self.transform = transform;
-        self.inverse = Some(self.transform.inverse()?);
+        self.inverse = inverse;
         Ok(())
     }
 
-    pub fn render(&self, world: &World) -> Result<Canvas, RenderError> {
+    pub fn render(&self, world: &World) -> Canvas {
         let mut image = Canvas::new(self.hsize, self.vsize);
 
         for y in 0..self.vsize {
             for x in 0..self.hsize {
-                let ray = self
-                    .ray_for_pixel(x, y)
-                    .map_err(|_| RenderError::RayForPixel)?;
-                let color = world.color_from(&ray).map_err(|_| RenderError::ColorAt)?;
+                let ray = self.ray_for_pixel(x, y).expect("pixel out of bounds");
+                let color = world.color_from(&ray);
                 image.write_pixel(x, y, color).expect("pixel out of bounds");
             }
         }
 
-        Ok(image)
+        image
     }
 }
 
@@ -128,7 +109,7 @@ mod test {
         assert_eq!(c.hsize, 160);
         assert_eq!(c.vsize, 120);
         assert_eq!(c.field_of_view, PI / 2.0);
-        assert_eq!(c.transform, Transform::identity());
+        assert_eq!(c.transform, IDENTITY);
     }
 
     #[test]
@@ -185,7 +166,7 @@ mod test {
         let to = Point::new(0.0, 0.0, 0.0);
         let up = Vector::new(0.0, 1.0, 0.0);
         c.set_transform(view_transform(from, to, up)).unwrap();
-        let image = c.render(&w).unwrap();
+        let image = c.render(&w);
         assert_eq!(
             image.pixel_at(5, 5),
             Ok(Color::new(0.38066, 0.47583, 0.2855))

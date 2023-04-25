@@ -1,5 +1,5 @@
 use crate::{
-    matrices::{CastingTransformError, Transform},
+    matrices::Transform,
     tuples::{Point, Vector},
 };
 
@@ -18,11 +18,11 @@ impl Ray {
         self.origin + self.direction * t
     }
 
-    pub fn transformed(&self, transform: &Transform) -> Result<Ray, CastingTransformError> {
-        Ok(Ray {
-            origin: (transform * self.origin)?,
-            direction: (transform * self.direction)?,
-        })
+    pub fn transformed(&self, transform: &Transform) -> Ray {
+        Ray {
+            origin: transform * self.origin,
+            direction: transform * self.direction,
+        }
     }
 }
 
@@ -57,7 +57,7 @@ mod test {
     fn translate_ray() {
         let r = Ray::new(Point::new(1.0, 2.0, 3.0), Vector::new(0.0, 1.0, 0.0));
         let m = translation(3.0, 4.0, 5.0);
-        let r2 = r.transformed(&m).expect("casting matrix error");
+        let r2 = r.transformed(&m);
         assert_eq!(r2.origin, Point::new(4.0, 6.0, 8.0));
         assert_eq!(r2.direction, Vector::new(0.0, 1.0, 0.0));
     }
@@ -66,7 +66,7 @@ mod test {
     fn scale_ray() {
         let r = Ray::new(Point::new(1.0, 2.0, 3.0), Vector::new(0.0, 1.0, 0.0));
         let m = scaling(2.0, 3.0, 4.0);
-        let r2 = r.transformed(&m).expect("casting matrix error");
+        let r2 = r.transformed(&m);
         assert_eq!(r2.origin, Point::new(2.0, 6.0, 12.0));
         assert_eq!(r2.direction, Vector::new(0.0, 3.0, 0.0));
     }
