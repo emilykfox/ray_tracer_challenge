@@ -14,16 +14,6 @@ pub struct World {
     pub light: PointLight,
 }
 
-#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct NoLightsourceError;
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum ColorError {
-    InsersectingSphere,
-    NoLightsource,
-    NormalTransformation,
-}
-
 impl World {
     pub fn new() -> Self {
         World::default()
