@@ -3,7 +3,7 @@ use crate::{Point, Vector, EQUALITY_EPSILON};
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct MatrixIndexError;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct Matrix<const M: usize, const N: usize> {
     pub entries: [[f64; N]; M],
 }
@@ -262,10 +262,12 @@ impl<const M: usize, const N: usize> std::ops::Index<[usize; 2]> for Matrix<M, N
     }
 }
 
-impl<const M: usize, const N: usize, const O: usize> std::ops::Mul<Matrix<N, O>> for Matrix<M, N> {
+impl<const M: usize, const N: usize, const O: usize> std::ops::Mul<&Matrix<N, O>>
+    for &Matrix<M, N>
+{
     type Output = Matrix<M, O>;
 
-    fn mul(self, rhs: Matrix<N, O>) -> Self::Output {
+    fn mul(self, rhs: &Matrix<N, O>) -> Self::Output {
         let mut entries = [[0.0; O]; M];
         for (i, row) in entries.iter_mut().enumerate() {
             for (j, entry) in row.iter_mut().enumerate() {
@@ -317,11 +319,11 @@ pub type Transform = Matrix<4, 4>;
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct CastingMatrixError;
 
-impl std::ops::Mul<Point> for Transform {
+impl std::ops::Mul<Point> for &Transform {
     type Output = Result<Point, CastingMatrixError>;
 
     fn mul(self, rhs: Point) -> Self::Output {
-        let product = self * Matrix::from(rhs);
+        let product = self * &Matrix::from(rhs);
         if product[[3, 0]] != 1.0 {
             Err(CastingMatrixError)
         } else {
@@ -331,11 +333,11 @@ impl std::ops::Mul<Point> for Transform {
 }
 
 /// Will return `Err(CastingMatrixError)`` if enclosed `Tuple` cannot be converted to a `Vector`
-impl std::ops::Mul<Vector> for Transform {
+impl std::ops::Mul<Vector> for &Transform {
     type Output = Result<Vector, CastingMatrixError>;
 
     fn mul(self, rhs: Vector) -> Self::Output {
-        let product = self * Matrix::from(rhs);
+        let product = self * &Matrix::from(rhs);
         if product[[3, 0]] != 0.0 {
             Err(CastingMatrixError)
         } else {
@@ -455,7 +457,7 @@ mod test {
             [40.0, 58.0, 110.0, 102.0],
             [16.0, 26.0, 46.0, 42.0],
         ]);
-        assert_eq!(a * b, product);
+        assert_eq!(&a * &b, product);
     }
 
     #[test]
@@ -467,7 +469,7 @@ mod test {
             [0.0, 0.0, 0.0, 1.0],
         ]);
         let p = Point::new(1.0, 2.0, 3.0);
-        assert_eq!(a * p, Ok(Point::new(18.0, 24.0, 33.0)));
+        assert_eq!(&a * p, Ok(Point::new(18.0, 24.0, 33.0)));
     }
 
     #[test]
@@ -479,7 +481,7 @@ mod test {
             [0.0, 0.0, 0.0, 1.0],
         ]);
         let v = Vector::new(1.0, 2.0, 3.0);
-        assert_eq!(a * v, Ok(Vector::new(14.0, 22.0, 32.0)));
+        assert_eq!(&a * v, Ok(Vector::new(14.0, 22.0, 32.0)));
     }
 
     #[test]
@@ -492,8 +494,8 @@ mod test {
         ]);
         let p = Point::new(1.0, 2.0, 3.0);
         let v = Vector::new(1.0, 2.0, 3.0);
-        assert_eq!(a * p, Err(CastingMatrixError));
-        assert_eq!(a * v, Err(CastingMatrixError));
+        assert_eq!(&a * p, Err(CastingMatrixError));
+        assert_eq!(&a * v, Err(CastingMatrixError));
     }
 
     #[test]
@@ -504,19 +506,19 @@ mod test {
             [2.0, 4.0, 8.0, 16.0],
             [4.0, 8.0, 16.0, 32.0],
         ]);
-        assert_eq!(a * Transform::identity(), a);
+        assert_eq!(&a * &Transform::identity(), a);
     }
 
     #[test]
     fn identity_times_point() {
         let a = Point::new(1.0, 2.0, 3.0);
-        assert_eq!(Transform::identity() * a, Ok(a));
+        assert_eq!(&Transform::identity() * a, Ok(a));
     }
 
     #[test]
     fn identity_times_vector() {
         let a = Vector::new(1.0, 2.0, 3.0);
-        assert_eq!(Transform::identity() * a, Ok(a));
+        assert_eq!(&Transform::identity() * a, Ok(a));
     }
 
     #[test]
@@ -718,8 +720,8 @@ mod test {
             [7.0, 0.0, 5.0, 4.0],
             [6.0, -2.0, 0.0, 5.0],
         ]);
-        let c = a * b;
-        assert_eq!(c * b.inverse().expect("not invertable"), a);
+        let c = &a * &b;
+        assert_eq!(&c * &b.inverse().expect("not invertable"), a);
     }
 
     #[test]

@@ -40,12 +40,12 @@ fn main() -> std::io::Result<()> {
             let world_x = -half + pixel_size * x as f64;
             let position = Point::new(world_x, world_y, wall_z);
             let ray = Ray::new(ray_origin, (position - ray_origin).normalize());
-            let intersections = sphere.intersect(ray).unwrap();
+            let intersections = sphere.intersect(&ray).unwrap();
             if let Some(hit) = intersections.hit() {
                 let point = ray.position(hit.t);
                 let normal = hit.object.normal_at(point).unwrap();
                 let eye = -ray.direction;
-                let color = lighting(hit.object.material, light, point, eye, normal);
+                let color = lighting(&hit.object.material, &light, point, eye, normal);
                 canvas
                     .write_pixel(x, y, color)
                     .expect("unable to write pixel");

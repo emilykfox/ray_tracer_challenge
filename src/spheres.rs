@@ -6,7 +6,7 @@ use crate::{
     Point, Vector,
 };
 
-#[derive(Default, Debug, Copy, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct Sphere {
     pub material: Material,
     transform: Transform,
@@ -30,11 +30,14 @@ impl Sphere {
 
     pub fn set_transform(&mut self, transform: Transform) {
         self.transform = transform;
-        self.inverse = transform.inverse().ok();
+        self.inverse = self.transform.inverse().ok();
     }
 
-    pub fn intersect(&self, ray: Ray) -> Result<Intersections, IntersectingSphereError> {
-        let inverse = self.inverse.ok_or(IntersectingSphereError::NoInverse)?;
+    pub fn intersect(&self, ray: &Ray) -> Result<Intersections, IntersectingSphereError> {
+        let inverse = self
+            .inverse
+            .as_ref()
+            .ok_or(IntersectingSphereError::NoInverse)?;
         let ray2 = ray
             .transformed(inverse)
             .map_err(|_| IntersectingSphereError::CastingMatrix)?;
@@ -59,16 +62,19 @@ impl Sphere {
     }
 
     pub fn normal_at(&self, point: Point) -> Result<Vector, IntersectingSphereError> {
-        let inverse = self.inverse.ok_or(IntersectingSphereError::NoInverse)?;
+        let inverse = self
+            .inverse
+            .as_ref()
+            .ok_or(IntersectingSphereError::NoInverse)?;
         let object_point = (inverse * point).map_err(|_| IntersectingSphereError::CastingMatrix)?;
         let object_normal = object_point - Point::new(0.0, 0.0, 0.0);
         let object_normal_matrix =
             Matrix::new([[object_normal.x], [object_normal.y], [object_normal.z]]);
-        let world_normal_matrix = inverse
+        let world_normal_matrix = &inverse
             .submatrix(3, 3)
             .expect("matrix index error")
             .transpose()
-            * object_normal_matrix;
+            * &object_normal_matrix;
         Ok(Vector::new(
             world_normal_matrix[[0, 0]],
             world_normal_matrix[[1, 0]],
@@ -94,7 +100,7 @@ mod test {
     fn intersect_twice() {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::new();
-        let xs = s.intersect(r).expect("intersecting sphere error");
+        let xs = s.intersect(&r).expect("intersecting sphere error");
         assert_eq!(xs.vec.len(), 2);
         assert_eq!(xs.vec[0].t, 4.0);
         assert_eq!(xs.vec[1].t, 6.0);
@@ -104,7 +110,7 @@ mod test {
     fn tangent() {
         let r = Ray::new(Point::new(0.0, 1.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::new();
-        let xs = s.intersect(r).expect("intersecting sphere error");
+        let xs = s.intersect(&r).expect("intersecting sphere error");
         assert_eq!(xs.vec.len(), 2);
         assert_eq!(xs.vec[0].t, 5.0);
         assert_eq!(xs.vec[1].t, 5.0);
@@ -114,7 +120,7 @@ mod test {
     fn miss() {
         let r = Ray::new(Point::new(0.0, 2.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::new();
-        let xs = s.intersect(r).expect("intersecting sphere error");
+        let xs = s.intersect(&r).expect("intersecting sphere error");
         assert_eq!(xs.vec.len(), 0);
     }
 
@@ -122,7 +128,7 @@ mod test {
     fn from_inside() {
         let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::new();
-        let xs = s.intersect(r).expect("intersecting sphere error");
+        let xs = s.intersect(&r).expect("intersecting sphere error");
         assert_eq!(xs.vec.len(), 2);
         assert_eq!(xs.vec[0].t, -1.0);
         assert_eq!(xs.vec[1].t, 1.0);
@@ -132,7 +138,7 @@ mod test {
     fn behind() {
         let r = Ray::new(Point::new(0.0, 0.0, 5.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::new();
-        let xs = s.intersect(r).expect("intersecting sphere error");
+        let xs = s.intersect(&r).expect("intersecting sphere error");
         assert_eq!(xs.vec.len(), 2);
         assert_eq!(xs.vec[0].t, -6.0);
         assert_eq!(xs.vec[1].t, -4.0);
@@ -142,7 +148,7 @@ mod test {
     fn intersection_sets_object() {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::new();
-        let xs = s.intersect(r).expect("intersecting sphere error");
+        let xs = s.intersect(&r).expect("intersecting sphere error");
         assert_eq!(xs.vec.len(), 2);
         assert_eq!(xs.vec[0].object, &s);
         assert_eq!(xs.vec[1].object, &s);
@@ -158,7 +164,7 @@ mod test {
     fn change_transform() {
         let mut s = Sphere::new();
         let t = translation(2.0, 3.0, 4.0);
-        s.set_transform(t);
+        s.set_transform(t.clone());
         assert_eq!(s.transform, t);
     }
 
@@ -167,7 +173,7 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let mut s = Sphere::new();
         s.set_transform(scaling(2.0, 2.0, 2.0));
-        let xs = s.intersect(r).expect("intersecting sphere error");
+        let xs = s.intersect(&r).expect("intersecting sphere error");
         assert_eq!(xs.vec.len(), 2);
         assert_eq!(xs.vec[0].t, 3.0);
         assert_eq!(xs.vec[1].t, 7.0);
@@ -178,7 +184,7 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let mut s = Sphere::new();
         s.set_transform(translation(5.0, 0.0, 0.0));
-        let xs = s.intersect(r).expect("intersecting sphere error");
+        let xs = s.intersect(&r).expect("intersecting sphere error");
         assert_eq!(xs.vec.len(), 0);
     }
 
@@ -249,7 +255,7 @@ mod test {
     #[test]
     fn normal_on_transformed_sphere() {
         let mut s = Sphere::new();
-        let m = scaling(1.0, 0.5, 1.0) * rotation_z(PI / 5.0);
+        let m = &scaling(1.0, 0.5, 1.0) * &rotation_z(PI / 5.0);
         s.set_transform(m);
         let n = s
             .normal_at(Point::new(0.0, 2_f64.sqrt() / 2.0, -(2_f64.sqrt()) / 2.0))
@@ -271,7 +277,7 @@ mod test {
             ambient: 1.0,
             ..Material::default()
         };
-        s.material = m;
+        s.material = m.clone();
         assert_eq!(s.material, m);
     }
 }

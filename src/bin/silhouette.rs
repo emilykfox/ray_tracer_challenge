@@ -24,7 +24,7 @@ fn main() -> std::io::Result<()> {
             let world_x = -half + pixel_size * x as f64;
             let position = Point::new(world_x, world_y, wall_z);
             let ray = Ray::new(ray_origin, (position - ray_origin).normalize());
-            let intersections = shape.intersect(ray).unwrap();
+            let intersections = shape.intersect(&ray).unwrap();
             if intersections.hit().is_some() {
                 canvas
                     .write_pixel(x, y, color)

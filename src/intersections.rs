@@ -1,6 +1,6 @@
 use crate::spheres::Sphere;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Intersection<'object> {
     pub t: f64,
     pub object: &'object Sphere,
@@ -22,12 +22,11 @@ impl<'objects> Intersections<'objects> {
         Intersections { vec }
     }
 
-    pub fn hit(&self) -> Option<Intersection<'objects>> {
+    pub fn hit(&self) -> Option<&Intersection<'objects>> {
         self.vec
             .iter()
             .filter(|intersection| intersection.t >= 0.0)
             .min_by(|x, y| x.t.total_cmp(&y.t))
-            .copied()
     }
 }
 
@@ -61,9 +60,9 @@ mod test {
         let s = Sphere::new();
         let i1 = Intersection::new(1.0, &s);
         let i2 = Intersection::new(2.0, &s);
-        let xs = Intersections::new(vec![i2, i1]);
-        let i = xs.hit();
-        assert_eq!(i, Some(i1));
+        let xs = Intersections::new(vec![i2, i1.clone()]);
+        let i = xs.hit().unwrap();
+        assert_eq!(*i, i1);
     }
 
     #[test]
@@ -71,9 +70,9 @@ mod test {
         let s = Sphere::new();
         let i1 = Intersection::new(-1.0, &s);
         let i2 = Intersection::new(1.0, &s);
-        let xs = Intersections::new(vec![i2, i1]);
-        let i = xs.hit();
-        assert_eq!(i, Some(i2));
+        let xs = Intersections::new(vec![i2.clone(), i1]);
+        let i = xs.hit().unwrap();
+        assert_eq!(*i, i2);
     }
 
     #[test]
@@ -93,8 +92,8 @@ mod test {
         let i2 = Intersection::new(7.0, &s);
         let i3 = Intersection::new(-3.0, &s);
         let i4 = Intersection::new(2.0, &s);
-        let xs = Intersections::new(vec![i1, i2, i3, i4]);
-        let i = xs.hit();
-        assert_eq!(i, Some(i4));
+        let xs = Intersections::new(vec![i1, i2, i3, i4.clone()]);
+        let i = xs.hit().unwrap();
+        assert_eq!(*i, i4);
     }
 }

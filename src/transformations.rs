@@ -1,5 +1,14 @@
 use crate::{matrices::Transform, Point, Vector};
 
+pub const IDENTITY: Transform = Transform {
+    entries: [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ],
+};
+
 pub fn translation(x: f64, y: f64, z: f64) -> Transform {
     Transform::new([
         [1.0, 0.0, 0.0, x],
@@ -74,48 +83,46 @@ pub fn view_transform(from: Point, to: Point, up: Vector) -> Transform {
         [0.0, 0.0, 0.0, 1.0],
     ]);
 
-    orientation * translation(-from.x, -from.y, -from.z)
+    &orientation * &translation(-from.x, -from.y, -from.z)
 }
 
-#[derive(Default, Debug, Clone, Copy, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct Builder {
     current: Transform,
 }
 
 impl Builder {
     pub fn new() -> Self {
-        Builder {
-            current: Transform::identity(),
-        }
+        Builder { current: IDENTITY }
     }
 
     pub fn translation(self, x: f64, y: f64, z: f64) -> Builder {
         Builder {
-            current: translation(x, y, z) * self.current,
+            current: &translation(x, y, z) * &self.current,
         }
     }
 
     pub fn scaling(self, x: f64, y: f64, z: f64) -> Builder {
         Builder {
-            current: scaling(x, y, z) * self.current,
+            current: &scaling(x, y, z) * &self.current,
         }
     }
 
     pub fn rotation_x(self, r: f64) -> Builder {
         Builder {
-            current: rotation_x(r) * self.current,
+            current: &rotation_x(r) * &self.current,
         }
     }
 
     pub fn rotation_y(self, r: f64) -> Builder {
         Builder {
-            current: rotation_y(r) * self.current,
+            current: &rotation_y(r) * &self.current,
         }
     }
 
     pub fn rotation_z(self, r: f64) -> Builder {
         Builder {
-            current: rotation_z(r) * self.current,
+            current: &rotation_z(r) * &self.current,
         }
     }
 
@@ -129,11 +136,11 @@ impl Builder {
         z_by_y: f64,
     ) -> Builder {
         Builder {
-            current: shearing(x_by_y, x_by_z, y_by_x, y_by_z, z_by_x, z_by_y) * self.current,
+            current: &shearing(x_by_y, x_by_z, y_by_x, y_by_z, z_by_x, z_by_y) * &self.current,
         }
     }
 
-    pub fn transform(&self) -> Transform {
+    pub fn transform(self) -> Transform {
         self.current
     }
 }
@@ -149,7 +156,7 @@ mod test {
     fn translate() {
         let transform = translation(5.0, -3.0, 2.0);
         let p = Point::new(-3.0, 4.0, 5.0);
-        assert_eq!(transform * p, Ok(Point::new(2.0, 1.0, 7.0)));
+        assert_eq!(&transform * p, Ok(Point::new(2.0, 1.0, 7.0)));
     }
 
     #[test]
@@ -157,28 +164,28 @@ mod test {
         let transform = translation(5.0, -3.0, 2.0);
         let inverse = transform.inverse().expect("cannot take inverse");
         let p = Point::new(-3.0, 4.0, 5.0);
-        assert_eq!(inverse * p, Ok(Point::new(-8.0, 7.0, 3.0)));
+        assert_eq!(&inverse * p, Ok(Point::new(-8.0, 7.0, 3.0)));
     }
 
     #[test]
     fn translation_ignores_vectors() {
         let transform = translation(5.0, -3.0, 2.0);
         let v = Vector::new(-3.0, 4.0, 5.0);
-        assert_eq!(transform * v, Ok(v));
+        assert_eq!(&transform * v, Ok(v));
     }
 
     #[test]
     fn scale_point() {
         let transform = scaling(2.0, 3.0, 4.0);
         let p = Point::new(-4.0, 6.0, 8.0);
-        assert_eq!(transform * p, Ok(Point::new(-8.0, 18.0, 32.0)));
+        assert_eq!(&transform * p, Ok(Point::new(-8.0, 18.0, 32.0)));
     }
 
     #[test]
     fn scale_vector() {
         let transform = scaling(2.0, 3.0, 4.0);
         let v = Vector::new(-4.0, 6.0, 8.0);
-        assert_eq!(transform * v, Ok(Vector::new(-8.0, 18.0, 32.0)));
+        assert_eq!(&transform * v, Ok(Vector::new(-8.0, 18.0, 32.0)));
     }
 
     #[test]
@@ -186,14 +193,14 @@ mod test {
         let transform = scaling(2.0, 3.0, 4.0);
         let inverse = transform.inverse().expect("cannot take inverse");
         let v = Vector::new(-4.0, 6.0, 8.0);
-        assert_eq!(inverse * v, Ok(Vector::new(-2.0, 2.0, 2.0)));
+        assert_eq!(&inverse * v, Ok(Vector::new(-2.0, 2.0, 2.0)));
     }
 
     #[test]
     fn reflection() {
         let transform = scaling(-1.0, 1.0, 1.0);
         let p = Point::new(2.0, 3.0, 4.0);
-        assert_eq!(transform * p, Ok(Point::new(-2.0, 3.0, 4.0)));
+        assert_eq!(&transform * p, Ok(Point::new(-2.0, 3.0, 4.0)));
     }
 
     #[test]
@@ -202,10 +209,10 @@ mod test {
         let half_quarter = rotation_x(PI / 4.0);
         let full_quarter = rotation_x(PI / 2.0);
         assert_eq!(
-            half_quarter * p,
+            &half_quarter * p,
             Ok(Point::new(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0))
         );
-        assert_eq!(full_quarter * p, Ok(Point::new(0.0, 0.0, 1.0)));
+        assert_eq!(&full_quarter * p, Ok(Point::new(0.0, 0.0, 1.0)));
     }
 
     #[test]
@@ -214,7 +221,7 @@ mod test {
         let half_quarter = rotation_x(PI / 4.0);
         let inverse = half_quarter.inverse().expect("cannot take inverse");
         assert_eq!(
-            inverse * p,
+            &inverse * p,
             Ok(Point::new(
                 0.0,
                 2.0_f64.sqrt() / 2.0,
@@ -229,10 +236,10 @@ mod test {
         let half_quarter = rotation_y(PI / 4.0);
         let full_quarter = rotation_y(PI / 2.0);
         assert_eq!(
-            half_quarter * p,
+            &half_quarter * p,
             Ok(Point::new(2.0_f64.sqrt() / 2.0, 0.0, 2.0_f64.sqrt() / 2.0))
         );
-        assert_eq!(full_quarter * p, Ok(Point::new(1.0, 0.0, 0.0)));
+        assert_eq!(&full_quarter * p, Ok(Point::new(1.0, 0.0, 0.0)));
     }
 
     #[test]
@@ -241,56 +248,56 @@ mod test {
         let half_quarter = rotation_z(PI / 4.0);
         let full_quarter = rotation_z(PI / 2.0);
         assert_eq!(
-            half_quarter * p,
+            &half_quarter * p,
             Ok(Point::new(
                 -(2.0_f64.sqrt()) / 2.0,
                 2.0_f64.sqrt() / 2.0,
                 0.0
             ))
         );
-        assert_eq!(full_quarter * p, Ok(Point::new(-1.0, 0.0, 0.0)));
+        assert_eq!(&full_quarter * p, Ok(Point::new(-1.0, 0.0, 0.0)));
     }
 
     #[test]
     fn shear_x_by_y() {
         let transform = shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         let p = Point::new(2.0, 3.0, 4.0);
-        assert_eq!(transform * p, Ok(Point::new(5.0, 3.0, 4.0)));
+        assert_eq!(&transform * p, Ok(Point::new(5.0, 3.0, 4.0)));
     }
 
     #[test]
     fn shear_x_by_z() {
         let transform = shearing(0.0, 1.0, 0.0, 0.0, 0.0, 0.0);
         let p = Point::new(2.0, 3.0, 4.0);
-        assert_eq!(transform * p, Ok(Point::new(6.0, 3.0, 4.0)));
+        assert_eq!(&transform * p, Ok(Point::new(6.0, 3.0, 4.0)));
     }
 
     #[test]
     fn shear_y_by_x() {
         let transform = shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
         let p = Point::new(2.0, 3.0, 4.0);
-        assert_eq!(transform * p, Ok(Point::new(2.0, 5.0, 4.0)));
+        assert_eq!(&transform * p, Ok(Point::new(2.0, 5.0, 4.0)));
     }
 
     #[test]
     fn shear_y_by_z() {
         let transform = shearing(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
         let p = Point::new(2.0, 3.0, 4.0);
-        assert_eq!(transform * p, Ok(Point::new(2.0, 7.0, 4.0)));
+        assert_eq!(&transform * p, Ok(Point::new(2.0, 7.0, 4.0)));
     }
 
     #[test]
     fn shear_z_by_x() {
         let transform = shearing(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
         let p = Point::new(2.0, 3.0, 4.0);
-        assert_eq!(transform * p, Ok(Point::new(2.0, 3.0, 6.0)));
+        assert_eq!(&transform * p, Ok(Point::new(2.0, 3.0, 6.0)));
     }
 
     #[test]
     fn shear_z_by_y() {
         let transform = shearing(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         let p = Point::new(2.0, 3.0, 4.0);
-        assert_eq!(transform * p, Ok(Point::new(2.0, 3.0, 7.0)));
+        assert_eq!(&transform * p, Ok(Point::new(2.0, 3.0, 7.0)));
     }
 
     #[test]
@@ -299,11 +306,11 @@ mod test {
         let a = rotation_x(PI / 2.0);
         let b = scaling(5.0, 5.0, 5.0);
         let c = translation(10.0, 5.0, 7.0);
-        let p2 = (a * p).expect("matrix casting error");
+        let p2 = (&a * p).expect("matrix casting error");
         assert_eq!(p2, Point::new(1.0, -1.0, 0.0));
-        let p3 = (b * p2).expect("matrix casting error");
+        let p3 = (&b * p2).expect("matrix casting error");
         assert_eq!(p3, Point::new(5.0, -5.0, 0.0));
-        let p4 = (c * p3).expect("matrix casting error");
+        let p4 = (&c * p3).expect("matrix casting error");
         assert_eq!(p4, Point::new(15.0, 0.0, 7.0));
     }
 
@@ -313,8 +320,8 @@ mod test {
         let a = rotation_x(PI / 2.0);
         let b = scaling(5.0, 5.0, 5.0);
         let c = translation(10.0, 5.0, 7.0);
-        let t = c * b * a;
-        assert_eq!(t * p, Ok(Point::new(15.0, 0.0, 7.0)));
+        let t = &c * &(&b * &a);
+        assert_eq!(&t * p, Ok(Point::new(15.0, 0.0, 7.0)));
     }
 
     #[test]
@@ -326,7 +333,7 @@ mod test {
             .translation(10.0, 5.0, 7.0)
             .shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0)
             .transform();
-        assert_eq!(t * p, Ok(Point::new(15.0, 15.0, 7.0)));
+        assert_eq!(&t * p, Ok(Point::new(15.0, 15.0, 7.0)));
     }
 
     #[test]
@@ -335,7 +342,7 @@ mod test {
         let to = Point::new(0.0, 0.0, -1.0);
         let up = Vector::new(0.0, 1.0, 0.0);
         let t = view_transform(from, to, up);
-        assert_eq!(t, Transform::identity());
+        assert_eq!(t, IDENTITY);
     }
 
     #[test]
