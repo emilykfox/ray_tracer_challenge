@@ -1,7 +1,9 @@
 use crate::{
+    canvas::Canvas,
     matrices::{NoInverseError, Transform},
     rays::Ray,
     transformations::IDENTITY,
+    world::{ColorError, World},
     Point,
 };
 
@@ -22,6 +24,12 @@ pub enum RayForPixelError {
     PixelOutOfBounds,
     NoInverse,
     CastingTransform,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum RenderError {
+    RayForPixel,
+    ColorAt,
 }
 
 impl Camera {
@@ -80,13 +88,34 @@ impl Camera {
         self.inverse = Some(self.transform.inverse()?);
         Ok(())
     }
+
+    pub fn render(&self, world: &World) -> Result<Canvas, RenderError> {
+        let mut image = Canvas::new(self.hsize, self.vsize);
+
+        for y in 0..self.vsize {
+            for x in 0..self.hsize {
+                let ray = self
+                    .ray_for_pixel(x, y)
+                    .map_err(|_| RenderError::RayForPixel)?;
+                let color = world.color_from(&ray).map_err(|_| RenderError::ColorAt)?;
+                image.write_pixel(x, y, color).expect("pixel out of bounds");
+            }
+        }
+
+        Ok(image)
+    }
 }
 
 #[cfg(test)]
 mod test {
     use std::f64::consts::PI;
 
-    use crate::{transformations::Builder, Point, Vector, EQUALITY_EPSILON};
+    use crate::{
+        canvas::Color,
+        transformations::{view_transform, Builder},
+        world::default_world,
+        Point, Vector, EQUALITY_EPSILON,
+    };
 
     use super::*;
 
@@ -145,6 +174,21 @@ mod test {
         assert_eq!(
             r.direction,
             Vector::new(2_f64.sqrt() / 2.0, 0.0, -(2_f64.sqrt()) / 2.0)
+        );
+    }
+
+    #[test]
+    fn render() {
+        let w = default_world();
+        let mut c = Camera::new(11, 11, PI / 2.0);
+        let from = Point::new(0.0, 0.0, -5.0);
+        let to = Point::new(0.0, 0.0, 0.0);
+        let up = Vector::new(0.0, 1.0, 0.0);
+        c.set_transform(view_transform(from, to, up)).unwrap();
+        let image = c.render(&w).unwrap();
+        assert_eq!(
+            image.pixel_at(5, 5),
+            Ok(Color::new(0.38066, 0.47583, 0.2855))
         );
     }
 }

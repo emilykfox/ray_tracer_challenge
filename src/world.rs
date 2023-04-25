@@ -5,6 +5,7 @@ use crate::{
     material::lighting,
     rays::Ray,
     spheres::{IntersectingSphereError, Sphere},
+    transformations::Builder,
     Point, Vector,
 };
 
@@ -108,6 +109,20 @@ impl<'object> HitInfo<'object> {
     }
 }
 
+pub(crate) fn default_world() -> World {
+    let light = PointLight::new(Point::new(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
+    let mut s1 = Sphere::new();
+    s1.material.color = Color::new(0.8, 1.0, 0.6);
+    s1.material.diffuse = 0.7;
+    s1.material.specular = 0.2;
+    let mut s2 = Sphere::new();
+    s2.set_transform(Builder::new().scaling(0.5, 0.5, 0.5).transform());
+    World {
+        objects: vec![s1, s2],
+        light: Some(light),
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::{canvas::Color, rays::Ray, transformations::Builder, Point, Vector};
@@ -119,20 +134,6 @@ mod test {
         let w = World::new();
         assert!(w.objects.is_empty());
         assert_eq!(w.light, None);
-    }
-
-    fn default_world() -> World {
-        let light = PointLight::new(Point::new(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let mut s1 = Sphere::new();
-        s1.material.color = Color::new(0.8, 1.0, 0.6);
-        s1.material.diffuse = 0.7;
-        s1.material.specular = 0.2;
-        let mut s2 = Sphere::new();
-        s2.set_transform(Builder::new().scaling(0.5, 0.5, 0.5).transform());
-        World {
-            objects: vec![s1, s2],
-            light: Some(light),
-        }
     }
 
     #[test]
