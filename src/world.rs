@@ -29,7 +29,7 @@ impl World {
         Intersections::new(vec)
     }
 
-    pub fn shade_hit(&self, hit_info: HitInfo) -> Color {
+    pub fn shade_hit(&self, hit_info: &HitInfo) -> Color {
         lighting(
             &hit_info.object.material,
             &self.light,
@@ -47,7 +47,7 @@ impl World {
             return Color::default();
         };
         let hit_info = HitInfo::prepare(hit, ray);
-        self.shade_hit(hit_info)
+        self.shade_hit(&hit_info)
     }
 
     pub fn is_shadowed(&self, point: Point) -> bool {
@@ -200,7 +200,7 @@ mod test {
         let shape = &w.objects[0];
         let i = Intersection::new(4.0, shape);
         let hit_info = HitInfo::prepare(&i, &r);
-        let c = w.shade_hit(hit_info);
+        let c = w.shade_hit(&hit_info);
         assert_eq!(c, Color::new(0.38066, 0.47583, 0.2855));
     }
 
@@ -212,7 +212,7 @@ mod test {
         let shape = &w.objects[1];
         let i = Intersection::new(0.5, shape);
         let hit_info = HitInfo::prepare(&i, &r);
-        let c = w.shade_hit(hit_info);
+        let c = w.shade_hit(&hit_info);
         assert_eq!(c, Color::new(0.90498, 0.90498, 0.90498));
     }
 
