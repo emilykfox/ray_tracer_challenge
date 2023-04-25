@@ -5,7 +5,6 @@ use crate::{
     material::lighting,
     rays::Ray,
     spheres::{IntersectingSphereError, Sphere},
-    transformations::Builder,
     Point, Vector,
 };
 
@@ -109,7 +108,10 @@ impl<'object> HitInfo<'object> {
     }
 }
 
+#[cfg(test)]
 pub(crate) fn default_world() -> World {
+    use crate::transformations::Builder;
+
     let light = PointLight::new(Point::new(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
     let mut s1 = Sphere::new();
     s1.material.color = Color::new(0.8, 1.0, 0.6);

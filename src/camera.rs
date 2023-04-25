@@ -3,7 +3,7 @@ use crate::{
     matrices::{NoInverseError, Transform},
     rays::Ray,
     transformations::IDENTITY,
-    world::{ColorError, World},
+    world::World,
     Point,
 };
 
