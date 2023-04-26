@@ -1,13 +1,13 @@
-use crate::spheres::Sphere;
+use crate::{shapes::Shape, spheres::Sphere};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Intersection<'object> {
     pub t: f64,
-    pub object: &'object Sphere,
+    pub object: &'object Shape,
 }
 
 impl<'object> Intersection<'object> {
-    pub fn new(t: f64, object: &'object Sphere) -> Self {
+    pub fn new(t: f64, object: &'object Shape) -> Self {
         Intersection { t, object }
     }
 }
