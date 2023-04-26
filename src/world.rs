@@ -8,6 +8,8 @@ use crate::{
     Point, Vector,
 };
 
+const SHADOW_EPSILON: f64 = 0.00001;
+
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct World {
     pub objects: Vec<Sphere>,
@@ -30,13 +32,14 @@ impl World {
     }
 
     pub fn shade_hit(&self, hit_info: &HitInfo) -> Color {
+        let is_shadowed = self.is_shadowed(hit_info.over_point);
         lighting(
             &hit_info.object.material,
             &self.light,
             hit_info.point,
             hit_info.eyev,
             hit_info.normal,
-            false,
+            is_shadowed,
         )
     }
 
@@ -74,6 +77,7 @@ pub struct HitInfo<'object> {
     pub eyev: Vector,
     pub normal: Vector,
     pub inside: bool,
+    pub over_point: Point,
 }
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
@@ -88,6 +92,7 @@ impl<'object> HitInfo<'object> {
         let naive_normal = object.normal_at(point);
         let inside = Vector::dot(naive_normal, eyev) < 0.0;
         let normal = if inside { -naive_normal } else { naive_normal };
+        let over_point = point + normal * SHADOW_EPSILON;
         HitInfo {
             t,
             object,
@@ -95,6 +100,7 @@ impl<'object> HitInfo<'object> {
             eyev,
             normal,
             inside,
+            over_point,
         }
     }
 }
@@ -119,7 +125,12 @@ pub(crate) fn default_world() -> World {
 
 #[cfg(test)]
 mod test {
-    use crate::{canvas::Color, rays::Ray, transformations::Builder, Point, Vector};
+    use crate::{
+        canvas::Color,
+        rays::Ray,
+        transformations::{translation, Builder},
+        Point, Vector,
+    };
 
     use super::*;
 
@@ -271,5 +282,32 @@ mod test {
         let w = default_world();
         let p = Point::new(-2.0, 2.0, -2.0);
         assert!(!w.is_shadowed(p));
+    }
+
+    #[test]
+    fn shade_hit_given_shadowed() {
+        let mut w = World::new();
+        w.light = PointLight::new(Point::new(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let s1 = Sphere::new();
+        w.objects.push(s1);
+        let mut s2 = Sphere::new();
+        s2.set_transform(translation(0.0, 0.0, 10.0)).unwrap();
+        w.objects.push(s2);
+        let r = Ray::new(Point::new(0.0, 0.0, 5.0), Vector::new(0.0, 0.0, 1.0));
+        let i = Intersection::new(4.0, &w.objects[1]);
+        let hit_info = HitInfo::prepare(&i, &r);
+        let c = w.shade_hit(&hit_info);
+        assert_eq!(c, Color::new(0.1, 0.1, 0.1));
+    }
+
+    #[test]
+    fn hit_should_offset_point() {
+        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let mut shape = Sphere::new();
+        shape.set_transform(translation(0.0, 0.0, 1.0)).unwrap();
+        let i = Intersection::new(5.0, &shape);
+        let hit_info = HitInfo::prepare(&i, &r);
+        assert!(hit_info.over_point.z < -SHADOW_EPSILON / 2.0);
+        assert!(hit_info.point.z > hit_info.over_point.z);
     }
 }
