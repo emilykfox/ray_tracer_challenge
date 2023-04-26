@@ -1,14 +1,20 @@
-use crate::spheres::Sphere;
+use crate::{shapes::Shape, EQUALITY_EPSILON};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Intersection<'object> {
     pub t: f64,
-    pub object: &'object Sphere,
+    pub object: &'object Shape,
 }
 
 impl<'object> Intersection<'object> {
-    pub fn new(t: f64, object: &'object Sphere) -> Self {
+    pub fn new(t: f64, object: &'object Shape) -> Self {
         Intersection { t, object }
+    }
+}
+
+impl<'object> PartialEq for Intersection<'object> {
+    fn eq(&self, other: &Self) -> bool {
+        (self.t - other.t) < EQUALITY_EPSILON && std::ptr::eq(self.object, other.object)
     }
 }
 
@@ -32,13 +38,13 @@ impl<'objects> Intersections<'objects> {
 
 #[cfg(test)]
 mod test {
-    use crate::spheres::Sphere;
+    use crate::shapes::spheres::Sphere;
 
     use super::*;
 
     #[test]
     fn create_intersection() {
-        let s = Sphere::new();
+        let s = Shape::new(Sphere);
         let i = Intersection::new(3.5, &s);
         assert_eq!(i.t, 3.5);
         assert_eq!(i.object, &s);
@@ -46,7 +52,7 @@ mod test {
 
     #[test]
     fn aggregate_intersections() {
-        let s = Sphere::new();
+        let s = Shape::new(Sphere);
         let i1 = Intersection::new(1.0, &s);
         let i2 = Intersection::new(2.0, &s);
         let xs = Intersections::new(vec![i1, i2]);
@@ -57,7 +63,7 @@ mod test {
 
     #[test]
     fn hit_all_positive() {
-        let s = Sphere::new();
+        let s = Shape::new(Sphere);
         let i1 = Intersection::new(1.0, &s);
         let i2 = Intersection::new(2.0, &s);
         let xs = Intersections::new(vec![i2, i1.clone()]);
@@ -67,7 +73,7 @@ mod test {
 
     #[test]
     fn hit_some_negative() {
-        let s = Sphere::new();
+        let s = Shape::new(Sphere);
         let i1 = Intersection::new(-1.0, &s);
         let i2 = Intersection::new(1.0, &s);
         let xs = Intersections::new(vec![i2.clone(), i1]);
@@ -77,7 +83,7 @@ mod test {
 
     #[test]
     fn hit_all_negative() {
-        let s = Sphere::new();
+        let s = Shape::new(Sphere);
         let i1 = Intersection::new(-2.0, &s);
         let i2 = Intersection::new(-1.0, &s);
         let xs = Intersections::new(vec![i2, i1]);
@@ -87,7 +93,7 @@ mod test {
 
     #[test]
     fn hit_lowest_nonnegative() {
-        let s = Sphere::new();
+        let s = Shape::new(Sphere);
         let i1 = Intersection::new(5.0, &s);
         let i2 = Intersection::new(7.0, &s);
         let i3 = Intersection::new(-3.0, &s);
