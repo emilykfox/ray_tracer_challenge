@@ -1,16 +1,33 @@
-use crate::{material::Material, matrices::Transform};
+use crate::{
+    material::Material,
+    matrices::{NoInverseError, Transform, IDENTITY},
+};
 
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
-pub struct NoInverseError;
+pub trait Model: 'static {}
 
-pub trait Shape {
-    fn transform(&self) -> &Transform;
+pub struct Shape {
+    transform: Transform,
+    inverse: Transform,
+    pub material: Material,
+    pub model: Box<dyn Model>,
+}
 
-    fn set_transform(&mut self, transform: Transform) -> Result<(), NoInverseError>;
+impl Shape {
+    pub fn new(form: impl Model) -> Self {
+        Shape {
+            transform: IDENTITY,
+            inverse: IDENTITY,
+            material: Material::default(),
+            model: Box::new(form),
+        }
+    }
 
-    fn material(&self) -> &Material;
-
-    fn set_material(&mut self, material: Material);
+    pub fn set_transform(&mut self, transform: Transform) -> Result<(), NoInverseError> {
+        let inverse = transform.inverse()?;
+        self.transform = transform;
+        self.inverse = inverse;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -19,67 +36,38 @@ mod test {
 
     use super::*;
 
-    struct TestShape {
-        transform: Transform,
-        material: Material,
-    }
+    struct TestModel;
 
-    impl TestShape {
-        pub fn new() -> TestShape {
-            TestShape {
-                transform: IDENTITY,
-                material: Material::default(),
-            }
-        }
-    }
-
-    impl Shape for TestShape {
-        fn transform(&self) -> &Transform {
-            &self.transform
-        }
-
-        fn set_transform(&mut self, transform: Transform) -> Result<(), NoInverseError> {
-            self.transform = transform;
-            Ok(())
-        }
-
-        fn material(&self) -> &Material {
-            &self.material
-        }
-
-        fn set_material(&mut self, material: Material) {
-            self.material = material;
-        }
-    }
+    impl Model for TestModel {}
 
     #[test]
     fn default_transform() {
-        let s: Box<dyn Shape> = Box::new(TestShape::new());
-        assert_eq!(*s.transform(), IDENTITY);
+        let s = Shape::new(TestModel);
+        assert_eq!(s.transform, IDENTITY);
     }
 
     #[test]
     fn assigning_transform() {
-        let mut s: Box<dyn Shape> = Box::new(TestShape::new());
+        let mut s = Shape::new(TestModel);
         s.set_transform(translation(2.0, 3.0, 4.0)).unwrap();
-        assert_eq!(*s.transform(), translation(2.0, 3.0, 4.0));
+        assert_eq!(s.transform, translation(2.0, 3.0, 4.0));
     }
 
     #[test]
     fn default_material() {
-        let s: Box<dyn Shape> = Box::new(TestShape::new());
+        let s = Shape::new(TestModel);
         let m = Material::default();
-        assert_eq!(*s.material(), m);
+        assert_eq!(s.material, m);
     }
 
     #[test]
     fn assigning_material() {
-        let mut s: Box<dyn Shape> = Box::new(TestShape::new());
+        let mut s = Shape::new(TestModel);
         let m = Material {
             ambient: 1.0,
             ..Material::default()
         };
-        s.set_material(m.clone());
-        assert_eq!(*s.material(), m);
+        s.material = m.clone();
+        assert_eq!(s.material, m);
     }
 }
