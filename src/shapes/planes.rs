@@ -12,7 +12,8 @@ impl Model for Plane {
         if local_ray.direction.y.abs() < PARALLEL_EPSILON {
             vec![]
         } else {
-            todo!()
+            let t = -local_ray.origin.y / local_ray.direction.y;
+            vec![t]
         }
     }
 
@@ -52,5 +53,23 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
         let xs = p.local_intersect(&r);
         assert!(xs.is_empty());
+    }
+
+    #[test]
+    fn intersect_from_above() {
+        let p = Plane;
+        let r = Ray::new(Point::new(0.0, 1.0, 0.0), Vector::new(0.0, -1.0, 0.0));
+        let xs = p.local_intersect(&r);
+        assert_eq!(xs.len(), 1);
+        assert_eq!(xs[0], 1.0);
+    }
+
+    #[test]
+    fn intersect_from_below() {
+        let p = Plane;
+        let r = Ray::new(Point::new(0.0, -1.0, 0.0), Vector::new(0.0, 1.0, 0.0));
+        let xs = p.local_intersect(&r);
+        assert_eq!(xs.len(), 1);
+        assert_eq!(xs[0], 1.0);
     }
 }
