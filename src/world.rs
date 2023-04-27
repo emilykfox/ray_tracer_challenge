@@ -10,7 +10,7 @@ use crate::{
 
 const SHADOW_EPSILON: f64 = 0.00001;
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct World {
     pub objects: Vec<Shape>,
     pub light: PointLight,
@@ -69,7 +69,7 @@ impl World {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct HitInfo<'object> {
     pub t: f64,
     pub object: &'object Shape,
