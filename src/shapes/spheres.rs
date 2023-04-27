@@ -1,8 +1,4 @@
-use crate::{
-    intersections::{Intersection, Intersections},
-    rays::Ray,
-    Point, Vector,
-};
+use crate::{rays::Ray, Point, Vector};
 
 use super::Model;
 
@@ -10,11 +6,7 @@ use super::Model;
 pub struct Sphere;
 
 impl Model for Sphere {
-    fn local_intersect<'shape>(
-        &self,
-        shape: &'shape super::Shape,
-        local_ray: &'_ Ray,
-    ) -> Intersections<'shape> {
+    fn local_intersect(&self, local_ray: &'_ Ray) -> Vec<f64> {
         let sphere_to_ray = local_ray.origin - Point::new(0.0, 0.0, 0.0);
 
         let a = Vector::dot(local_ray.direction, local_ray.direction);
@@ -24,19 +16,12 @@ impl Model for Sphere {
         let discriminant = b * b - 4.0 * a * c;
 
         if discriminant < 0.0 {
-            Intersections::new(vec![])
+            vec![]
         } else {
             let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
             let t2 = (-b + discriminant.sqrt()) / (2.0 * a);
-            Intersections::new(vec![
-                Intersection::new(t1, shape),
-                Intersection::new(t2, shape),
-            ])
+            vec![t1, t2]
         }
-    }
-
-    fn dynamic_clone(&self) -> Box<dyn Model> {
-        Box::new(Self)
     }
 }
 
@@ -139,7 +124,7 @@ mod test {
     #[test]
     fn intersect_scaled() {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = Shape::new(Sphere);
+        let mut s = Shape::new(Sphere);
         s.set_transform(scaling(2.0, 2.0, 2.0)).unwrap();
         let xs = s.intersect(&r);
         assert_eq!(xs.vec.len(), 2);
@@ -150,7 +135,7 @@ mod test {
     #[test]
     fn intersect_translated() {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = Shape::new(Sphere);
+        let mut s = Shape::new(Sphere);
         s.set_transform(translation(5.0, 0.0, 0.0)).unwrap();
         let xs = s.intersect(&r);
         assert_eq!(xs.vec.len(), 0);

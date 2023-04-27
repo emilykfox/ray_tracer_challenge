@@ -5,7 +5,9 @@ use crate::{
     rays::Ray,
 };
 
-use std::{cell::RefCell, fmt::Debug};
+#[cfg(test)]
+use std::cell::RefCell;
+use std::{any::Any, fmt::Debug};
 
 pub mod spheres;
 
@@ -14,14 +16,35 @@ thread_local! {
     static SAVED_RAY: RefCell<Ray> = RefCell::new(Ray::default());
 }
 
-pub trait Model: Debug {
-    fn local_intersect(&self, local_ray: &Ray) -> Vec<f64>;
-
+pub trait ModelDynamicClone {
     fn dynamic_clone(&self) -> Box<dyn Model>;
-
-    fn dynamic_eq(&self, other: &dyn Model) -> bool;
 }
 
+impl<T: Model + Clone> ModelDynamicClone for T {
+    fn dynamic_clone(&self) -> Box<dyn Model> {
+        Box::new(self.clone())
+    }
+}
+
+pub trait ModelDynamicPartialEq {
+    fn dynamic_eq(&self, other: &dyn Any) -> bool;
+}
+
+impl<T: Model + PartialEq> ModelDynamicPartialEq for T {
+    fn dynamic_eq(&self, other: &dyn Any) -> bool {
+        if let Some(other) = other.downcast_ref::<T>() {
+            self == other
+        } else {
+            false
+        }
+    }
+}
+
+pub trait Model: Debug + Any + ModelDynamicClone + ModelDynamicPartialEq + ModelAsAny {
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<f64>;
+}
+
+#[derive(Debug)]
 pub struct Shape {
     transform: Transform,
     inverse: Transform,
@@ -69,12 +92,22 @@ impl Clone for Shape {
     }
 }
 
+pub trait ModelAsAny: Any {
+    fn as_any(&self) -> &dyn Any;
+}
+
+impl<T: Model> ModelAsAny for T {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
 impl PartialEq for Shape {
     fn eq(&self, other: &Self) -> bool {
         self.transform == other.transform
             && self.inverse == other.inverse
             && self.material == other.material
-            && self.model.dynamic_eq(other.model.as_ref())
+            && self.model.dynamic_eq(other.model.as_ref().as_any())
     }
 }
 
@@ -98,14 +131,6 @@ mod test {
                 SAVED_RAY.with(|saved_ray| saved_ray.replace(local_ray.clone()));
             }
             vec![]
-        }
-
-        fn dynamic_clone(&self) -> Box<dyn Model> {
-            Box::new(Self)
-        }
-
-        fn dynamic_eq(&self, other: &dyn Model) -> bool {
-            todo!()
         }
     }
 
@@ -146,8 +171,10 @@ mod test {
         let mut s = Shape::new(TestModel);
         s.set_transform(scaling(2.0, 2.0, 2.0)).unwrap();
         _ = s.intersect(&r);
-        assert_eq!(s.saved_ray.borrow().origin, Point::new(0.0, 0.0, -2.5));
-        assert_eq!(s.saved_ray.borrow().direction, Vector::new(0.0, 0.0, 0.5));
+        SAVED_RAY
+            .with(|saved_ray| assert_eq!(saved_ray.borrow().origin, Point::new(0.0, 0.0, -2.5)));
+        SAVED_RAY
+            .with(|saved_ray| assert_eq!(saved_ray.borrow().direction, Vector::new(0.0, 0.0, 0.5)));
     }
 
     #[test]
@@ -156,7 +183,9 @@ mod test {
         let mut s = Shape::new(TestModel);
         s.set_transform(translation(5.0, 0.0, 0.0)).unwrap();
         _ = s.intersect(&r);
-        assert_eq!(s.saved_ray.borrow().origin, Point::new(-5.0, 0.0, -5.0));
-        assert_eq!(s.saved_ray.borrow().direction, Vector::new(0.0, 0.0, 1.0));
+        SAVED_RAY
+            .with(|saved_ray| assert_eq!(saved_ray.borrow().origin, Point::new(-5.0, 0.0, -5.0)));
+        SAVED_RAY
+            .with(|saved_ray| assert_eq!(saved_ray.borrow().direction, Vector::new(0.0, 0.0, 1.0)));
     }
 }
