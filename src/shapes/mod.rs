@@ -1,34 +1,32 @@
-#[cfg(test)]
-use std::cell::RefCell;
-use std::fmt::Debug;
-
 use crate::{
-    intersections::Intersections,
+    intersections::{Intersection, Intersections},
     material::Material,
     matrices::{NoInverseError, Transform, IDENTITY},
     rays::Ray,
 };
 
+use std::{cell::RefCell, fmt::Debug};
+
 pub mod spheres;
 
-pub trait Model: Debug {
-    fn local_intersect<'shape>(
-        &self,
-        shape: &'shape Shape,
-        local_ray: &'_ Ray,
-    ) -> Intersections<'shape>;
-
-    fn dynamic_clone(&self) -> Box<dyn Model>;
+#[cfg(test)]
+thread_local! {
+    static SAVED_RAY: RefCell<Ray> = RefCell::new(Ray::default());
 }
 
-#[derive(Debug)]
+pub trait Model: Debug {
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<f64>;
+
+    fn dynamic_clone(&self) -> Box<dyn Model>;
+
+    fn dynamic_eq(&self, other: &dyn Model) -> bool;
+}
+
 pub struct Shape {
     transform: Transform,
     inverse: Transform,
     pub material: Material,
     pub model: Box<dyn Model>,
-    #[cfg(test)]
-    saved_ray: RefCell<Ray>,
 }
 
 impl Shape {
@@ -38,8 +36,6 @@ impl Shape {
             inverse: IDENTITY,
             material: Material::default(),
             model: Box::new(model),
-            #[cfg(test)]
-            saved_ray: RefCell::new(Ray::default()),
         }
     }
 
@@ -52,7 +48,13 @@ impl Shape {
 
     pub fn intersect(&self, ray: &Ray) -> Intersections {
         let local_ray = ray.transformed(&self.inverse);
-        self.model.local_intersect(self, &local_ray)
+        Intersections::new(
+            self.model
+                .local_intersect(&local_ray)
+                .into_iter()
+                .map(|t| Intersection::new(t, self))
+                .collect(),
+        )
     }
 }
 
@@ -63,9 +65,16 @@ impl Clone for Shape {
             inverse: self.inverse.clone(),
             material: self.material.clone(),
             model: self.model.dynamic_clone(),
-            #[cfg(test)]
-            saved_ray: self.saved_ray.clone(),
         }
+    }
+}
+
+impl PartialEq for Shape {
+    fn eq(&self, other: &Self) -> bool {
+        self.transform == other.transform
+            && self.inverse == other.inverse
+            && self.material == other.material
+            && self.model.dynamic_eq(other.model.as_ref())
     }
 }
 
@@ -83,20 +92,20 @@ mod test {
     struct TestModel;
 
     impl Model for TestModel {
-        fn local_intersect<'shape>(
-            &self,
-            shape: &'shape Shape,
-            local_ray: &'_ Ray,
-        ) -> Intersections<'shape> {
+        fn local_intersect(&self, local_ray: &'_ Ray) -> Vec<f64> {
             #[cfg(test)]
             {
-                shape.saved_ray.replace(local_ray.clone());
+                SAVED_RAY.with(|saved_ray| saved_ray.replace(local_ray.clone()));
             }
-            Intersections::new(vec![])
+            vec![]
         }
 
         fn dynamic_clone(&self) -> Box<dyn Model> {
             Box::new(Self)
+        }
+
+        fn dynamic_eq(&self, other: &dyn Model) -> bool {
+            todo!()
         }
     }
 
