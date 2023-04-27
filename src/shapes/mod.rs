@@ -11,6 +11,7 @@ use std::{any::Any, fmt::Debug};
 mod planes;
 mod spheres;
 
+pub use planes::Plane;
 pub use spheres::Sphere;
 
 pub trait DynamicModel: Debug {
