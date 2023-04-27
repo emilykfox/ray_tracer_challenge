@@ -38,7 +38,7 @@ impl<'objects> Intersections<'objects> {
 
 #[cfg(test)]
 mod test {
-    use crate::shapes::spheres::Sphere;
+    use crate::shapes::Sphere;
 
     use super::*;
 

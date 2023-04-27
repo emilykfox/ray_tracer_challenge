@@ -8,7 +8,9 @@ use crate::{
 
 use std::{any::Any, fmt::Debug};
 
-pub mod spheres;
+mod spheres;
+
+pub use spheres::Sphere;
 
 pub trait DynamicModel: Debug {
     fn local_intersect(&self, local_ray: &Ray) -> Vec<f64>;

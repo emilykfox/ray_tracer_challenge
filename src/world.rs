@@ -107,7 +107,7 @@ impl<'object> HitInfo<'object> {
 
 #[cfg(test)]
 pub(crate) fn default_world() -> World {
-    use crate::{shapes::spheres::Sphere, transformations::Builder};
+    use crate::{shapes::Sphere, transformations::Builder};
 
     let light = PointLight::new(Point::new(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
     let mut s1 = Shape::new(Sphere);
@@ -128,7 +128,7 @@ mod test {
     use crate::{
         canvas::Color,
         rays::Ray,
-        shapes::spheres::Sphere,
+        shapes::Sphere,
         transformations::{translation, Builder},
         Point, Vector,
     };
