@@ -17,11 +17,12 @@ thread_local! {
     static SAVED_RAY: RefCell<Ray> = RefCell::new(Ray::default());
 }
 
+/*
 pub trait ModelDynamicClone {
     fn dynamic_clone(&self) -> Box<dyn Model>;
 }
 
-impl<T: Model + Clone> ModelDynamicClone for T {
+impl<T: Model + Clone + 'static> ModelDynamicClone for T {
     fn dynamic_clone(&self) -> Box<dyn Model> {
         Box::new(self.clone())
     }
@@ -31,7 +32,7 @@ pub trait ModelDynamicPartialEq {
     fn dynamic_eq(&self, other: &dyn Any) -> bool;
 }
 
-impl<T: Model + PartialEq> ModelDynamicPartialEq for T {
+impl<T: Model + PartialEq + 'static> ModelDynamicPartialEq for T {
     fn dynamic_eq(&self, other: &dyn Any) -> bool {
         if let Some(other) = other.downcast_ref::<T>() {
             self == other
@@ -40,24 +41,37 @@ impl<T: Model + PartialEq> ModelDynamicPartialEq for T {
         }
     }
 }
+    */
 
-pub trait DynamicModel: Debug {
-    fn dynamic_clone(&self) -> Box<dyn DynamicModel>;
-
-    fn dynamic_eq(&self, other: &dyn DynamicModel) -> bool;
-}
-
-pub trait AsAny {
+pub trait ModelAsAny: 'static {
     fn as_any(&self) -> &dyn Any;
 }
 
-impl<T: Any> AsAny for T {
+impl<T: Model + 'static> ModelAsAny for T {
     fn as_any(&self) -> &dyn Any {
         self
     }
 }
 
+pub trait DynamicModel: Debug + ModelAsAny {
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<f64>;
+
+    fn local_normal_at(&self, local_point: Point) -> Vector;
+
+    fn dynamic_clone(&self) -> Box<dyn DynamicModel>;
+
+    fn dynamic_eq(&self, other: &dyn DynamicModel) -> bool;
+}
+
 impl<T: Model + Clone + Debug + PartialEq + 'static> DynamicModel for T {
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<f64> {
+        self.local_intersect(local_ray)
+    }
+
+    fn local_normal_at(&self, local_point: Point) -> Vector {
+        self.local_normal_at(local_point)
+    }
+
     fn dynamic_clone(&self) -> Box<dyn DynamicModel> {
         Box::new(self.clone())
     }
@@ -71,7 +85,7 @@ impl<T: Model + Clone + Debug + PartialEq + 'static> DynamicModel for T {
     }
 }
 
-pub trait Model {
+pub trait Model: Debug + 'static {
     fn local_intersect(&self, local_ray: &Ray) -> Vec<f64>;
 
     fn local_normal_at(&self, local_point: Point) -> Vector;
@@ -86,7 +100,7 @@ pub struct Shape {
 }
 
 impl Shape {
-    pub fn new(model: impl Model) -> Self {
+    pub fn new(model: impl DynamicModel) -> Self {
         Shape {
             transform: IDENTITY,
             inverse: IDENTITY,
