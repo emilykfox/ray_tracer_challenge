@@ -41,7 +41,37 @@ impl<T: Model + PartialEq> ModelDynamicPartialEq for T {
     }
 }
 
-pub trait Model: Debug + Any + ModelDynamicClone + ModelDynamicPartialEq + ModelAsAny {
+pub trait DynamicModel: Debug {
+    fn dynamic_clone(&self) -> Box<dyn DynamicModel>;
+
+    fn dynamic_eq(&self, other: &dyn DynamicModel) -> bool;
+}
+
+pub trait AsAny {
+    fn as_any(&self) -> &dyn Any;
+}
+
+impl<T: Any> AsAny for T {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl<T: Model + Clone + Debug + PartialEq + 'static> DynamicModel for T {
+    fn dynamic_clone(&self) -> Box<dyn DynamicModel> {
+        Box::new(self.clone())
+    }
+
+    fn dynamic_eq(&self, other: &dyn DynamicModel) -> bool {
+        if let Some(other) = other.as_any().downcast_ref::<Self>() {
+            self == other
+        } else {
+            false
+        }
+    }
+}
+
+pub trait Model {
     fn local_intersect(&self, local_ray: &Ray) -> Vec<f64>;
 
     fn local_normal_at(&self, local_point: Point) -> Vector;
@@ -52,7 +82,7 @@ pub struct Shape {
     transform: Transform,
     inverse: Transform,
     pub material: Material,
-    pub model: Box<dyn Model>,
+    pub model: Box<dyn DynamicModel>,
 }
 
 impl Shape {
@@ -114,22 +144,12 @@ impl Clone for Shape {
     }
 }
 
-pub trait ModelAsAny: Any {
-    fn as_any(&self) -> &dyn Any;
-}
-
-impl<T: Model> ModelAsAny for T {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-
 impl PartialEq for Shape {
     fn eq(&self, other: &Self) -> bool {
         self.transform == other.transform
             && self.inverse == other.inverse
             && self.material == other.material
-            && self.model.dynamic_eq(other.model.as_ref().as_any())
+            && self.model.dynamic_eq(other.model.as_ref())
     }
 }
 

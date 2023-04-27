@@ -29,30 +29,6 @@ impl Model for Sphere {
     }
 }
 
-impl Sphere {
-    pub fn normal_at(&self, point: Point) -> Vector {
-        todo!();
-        /*
-        let object_point = &self.inverse * point;
-        let object_normal = object_point - Point::new(0.0, 0.0, 0.0);
-        let object_normal_matrix =
-            Matrix::new([[object_normal.x], [object_normal.y], [object_normal.z]]);
-        let world_normal_matrix = &self
-            .inverse
-            .submatrix(3, 3)
-            .expect("matrix index error")
-            .transpose()
-            * &object_normal_matrix;
-        Vector::new(
-            world_normal_matrix[[0, 0]],
-            world_normal_matrix[[1, 0]],
-            world_normal_matrix[[2, 0]],
-        )
-        .normalize()
-        */
-    }
-}
-
 #[cfg(test)]
 mod test {
     use std::f64::consts::{FRAC_1_SQRT_2, PI};
@@ -70,49 +46,49 @@ mod test {
     #[test]
     fn intersect_twice() {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = Shape::new(Sphere);
-        let xs = s.intersect(&r);
-        assert_eq!(xs.vec.len(), 2);
-        assert_eq!(xs.vec[0].t, 4.0);
-        assert_eq!(xs.vec[1].t, 6.0);
+        let s = Sphere;
+        let xs = s.local_intersect(&r);
+        assert_eq!(xs.len(), 2);
+        assert_eq!(xs[0], 4.0);
+        assert_eq!(xs[1], 6.0);
     }
 
     #[test]
     fn tangent() {
         let r = Ray::new(Point::new(0.0, 1.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = Shape::new(Sphere);
-        let xs = s.intersect(&r);
-        assert_eq!(xs.vec.len(), 2);
-        assert_eq!(xs.vec[0].t, 5.0);
-        assert_eq!(xs.vec[1].t, 5.0);
+        let s = Sphere;
+        let xs = s.local_intersect(&r);
+        assert_eq!(xs.len(), 2);
+        assert_eq!(xs[0], 5.0);
+        assert_eq!(xs[1], 5.0);
     }
 
     #[test]
     fn miss() {
         let r = Ray::new(Point::new(0.0, 2.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = Shape::new(Sphere);
-        let xs = s.intersect(&r);
-        assert_eq!(xs.vec.len(), 0);
+        let s = Sphere;
+        let xs = s.local_intersect(&r);
+        assert_eq!(xs.len(), 0);
     }
 
     #[test]
     fn from_inside() {
         let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
-        let s = Shape::new(Sphere);
-        let xs = s.intersect(&r);
-        assert_eq!(xs.vec.len(), 2);
-        assert_eq!(xs.vec[0].t, -1.0);
-        assert_eq!(xs.vec[1].t, 1.0);
+        let s = Sphere;
+        let xs = s.local_intersect(&r);
+        assert_eq!(xs.len(), 2);
+        assert_eq!(xs[0], -1.0);
+        assert_eq!(xs[1], 1.0);
     }
 
     #[test]
     fn behind() {
         let r = Ray::new(Point::new(0.0, 0.0, 5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = Shape::new(Sphere);
-        let xs = s.intersect(&r);
-        assert_eq!(xs.vec.len(), 2);
-        assert_eq!(xs.vec[0].t, -6.0);
-        assert_eq!(xs.vec[1].t, -4.0);
+        let s = Sphere;
+        let xs = s.local_intersect(&r);
+        assert_eq!(xs.len(), 2);
+        assert_eq!(xs[0], -6.0);
+        assert_eq!(xs[1], -4.0);
     }
 
     #[test]
@@ -203,26 +179,5 @@ mod test {
                  ));
                  assert_eq!(n, n.normalize());
                  */
-    }
-
-    #[test]
-    fn normal_on_translated_sphere() {
-        todo!(); /*
-                 let mut s = Sphere::new();
-                 s.set_transform(translation(0.0, 1.0, 0.0)).unwrap();
-                 let n = s.normal_at(Point::new(0.0, 1.0 + FRAC_1_SQRT_2, -FRAC_1_SQRT_2));
-                 assert_eq!(n, Vector::new(0.0, FRAC_1_SQRT_2, -FRAC_1_SQRT_2));
-                 */
-    }
-
-    #[test]
-    fn normal_on_transformed_sphere() {
-        todo!() /*
-                let mut s = Sphere::new();
-                let m = &scaling(1.0, 0.5, 1.0) * &rotation_z(PI / 5.0);
-                s.set_transform(m).unwrap();
-                let n = s.normal_at(Point::new(0.0, 2_f64.sqrt() / 2.0, -(2_f64.sqrt()) / 2.0));
-                assert_eq!(n, Vector::new(0.0, 0.97014, -0.24254));
-                */
     }
 }
