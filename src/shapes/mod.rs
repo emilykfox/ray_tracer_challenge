@@ -1,8 +1,9 @@
 use crate::{
     intersections::{Intersection, Intersections},
     material::Material,
-    matrices::{NoInverseError, Transform, IDENTITY},
+    matrices::{Matrix, NoInverseError, Transform, IDENTITY},
     rays::Ray,
+    Point, Vector,
 };
 
 #[cfg(test)]
@@ -42,6 +43,8 @@ impl<T: Model + PartialEq> ModelDynamicPartialEq for T {
 
 pub trait Model: Debug + Any + ModelDynamicClone + ModelDynamicPartialEq + ModelAsAny {
     fn local_intersect(&self, local_ray: &Ray) -> Vec<f64>;
+
+    fn local_normal_at(&self, local_point: Point) -> Vector;
 }
 
 #[derive(Debug)]
@@ -79,6 +82,25 @@ impl Shape {
                 .collect(),
         )
     }
+
+    pub fn normal_at(&self, point: Point) -> Vector {
+        let local_point = &self.inverse * point;
+        let local_normal = self.model.local_normal_at(local_point);
+        let local_normal_matrix =
+            Matrix::new([[local_normal.x], [local_normal.y], [local_normal.z]]);
+        let world_normal_matrix = &self
+            .inverse
+            .submatrix(3, 3)
+            .expect("matrix index error")
+            .transpose()
+            * &local_normal_matrix;
+        Vector::new(
+            world_normal_matrix[[0, 0]],
+            world_normal_matrix[[1, 0]],
+            world_normal_matrix[[2, 0]],
+        )
+        .normalize()
+    }
 }
 
 impl Clone for Shape {
@@ -113,9 +135,11 @@ impl PartialEq for Shape {
 
 #[cfg(test)]
 mod test {
+    use std::f64::consts::{FRAC_1_SQRT_2, PI};
+
     use crate::{
         matrices::IDENTITY,
-        transformations::{scaling, translation},
+        transformations::{rotation_z, scaling, translation},
         Point, Vector,
     };
 
@@ -131,6 +155,10 @@ mod test {
                 SAVED_RAY.with(|saved_ray| saved_ray.replace(local_ray.clone()));
             }
             vec![]
+        }
+
+        fn local_normal_at(&self, local_point: Point) -> Vector {
+            Vector::new(local_point.x, local_point.y, local_point.z)
         }
     }
 
@@ -187,5 +215,22 @@ mod test {
             .with(|saved_ray| assert_eq!(saved_ray.borrow().origin, Point::new(-5.0, 0.0, -5.0)));
         SAVED_RAY
             .with(|saved_ray| assert_eq!(saved_ray.borrow().direction, Vector::new(0.0, 0.0, 1.0)));
+    }
+
+    #[test]
+    fn normal_translated_shape() {
+        let mut s = Shape::new(TestModel);
+        s.set_transform(translation(0.0, 1.0, 0.0)).unwrap();
+        let n = s.normal_at(Point::new(0.0, 1.0 + FRAC_1_SQRT_2, -FRAC_1_SQRT_2));
+        assert_eq!(n, Vector::new(0.0, FRAC_1_SQRT_2, -FRAC_1_SQRT_2));
+    }
+
+    #[test]
+    fn normal_transformed_shape() {
+        let mut s = Shape::new(TestModel);
+        let m = &scaling(1.0, 0.5, 1.0) * &rotation_z(PI / 5.0);
+        s.set_transform(m).unwrap();
+        let n = s.normal_at(Point::new(0.0, 2_f64.sqrt() / 2.0, -(2_f64.sqrt()) / 2.0));
+        assert_eq!(n, Vector::new(0.0, 0.97014, -0.24254));
     }
 }

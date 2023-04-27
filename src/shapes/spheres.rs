@@ -23,6 +23,10 @@ impl Model for Sphere {
             vec![t1, t2]
         }
     }
+
+    fn local_normal_at(&self, local_point: Point) -> Vector {
+        local_point - Point::new(0.0, 0.0, 0.0)
+    }
 }
 
 impl Sphere {
