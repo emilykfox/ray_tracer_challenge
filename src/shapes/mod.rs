@@ -8,6 +8,7 @@ use crate::{
 
 use std::{any::Any, fmt::Debug};
 
+mod planes;
 mod spheres;
 
 pub use spheres::Sphere;
