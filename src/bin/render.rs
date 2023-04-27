@@ -6,7 +6,7 @@ use ray_tracer_challenge::{
     canvas::Color,
     lights::PointLight,
     material::Material,
-    spheres::Sphere,
+    shapes::{Shape, Sphere},
     transformations::{scaling, translation, view_transform, Builder},
     world::World,
     Point, Vector,
@@ -27,13 +27,13 @@ struct Args {
 fn main() -> std::io::Result<()> {
     let args = Args::parse();
 
-    let mut floor = Sphere::new();
+    let mut floor = Shape::new(Sphere);
     floor.set_transform(scaling(10.0, 0.01, 10.0)).unwrap();
     floor.material = Material::new();
     floor.material.color = Color::new(1.0, 0.9, 0.9);
     floor.material.specular = 0.0;
 
-    let mut left_wall = Sphere::new();
+    let mut left_wall = Shape::new(Sphere);
     left_wall
         .set_transform(
             Builder::new()
@@ -46,7 +46,7 @@ fn main() -> std::io::Result<()> {
         .unwrap();
     left_wall.material = floor.material.clone();
 
-    let mut right_wall = Sphere::new();
+    let mut right_wall = Shape::new(Sphere);
     right_wall
         .set_transform(
             Builder::new()
@@ -59,14 +59,14 @@ fn main() -> std::io::Result<()> {
         .unwrap();
     right_wall.material = floor.material.clone();
 
-    let mut middle = Sphere::new();
+    let mut middle = Shape::new(Sphere);
     middle.set_transform(translation(-0.5, 1.0, 0.5)).unwrap();
     middle.material = Material::new();
     middle.material.color = Color::new(0.1, 1.0, 0.5);
     middle.material.diffuse = 0.7;
     middle.material.specular = 0.3;
 
-    let mut right = Sphere::new();
+    let mut right = Shape::new(Sphere);
     right
         .set_transform(
             Builder::new()
@@ -80,7 +80,7 @@ fn main() -> std::io::Result<()> {
     right.material.diffuse = 0.7;
     right.material.specular = 0.3;
 
-    let mut left = Sphere::new();
+    let mut left = Shape::new(Sphere);
     left.set_transform(
         Builder::new()
             .scaling(0.33, 0.33, 0.33)
