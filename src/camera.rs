@@ -1,6 +1,6 @@
 use crate::{
     canvas::{Canvas, PixelOutOfBoundsError},
-    matrices::{NoInverseError, Transform, IDENTITY},
+    matrices::{Transform, IDENTITY},
     rays::Ray,
     world::World,
     Point,
@@ -17,6 +17,9 @@ pub struct Camera {
     half_height: f64,
     pixel_size: f64,
 }
+
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
+pub struct NoInverseError;
 
 impl Camera {
     pub fn new(hsize: usize, vsize: usize, field_of_view: f64) -> Self {
@@ -66,7 +69,7 @@ impl Camera {
     }
 
     pub fn set_transform(&mut self, transform: Transform) -> Result<(), NoInverseError> {
-        let inverse = transform.inverse()?;
+        let inverse = transform.inverse().ok_or(NoInverseError)?;
         self.transform = transform;
         self.inverse = inverse;
         Ok(())

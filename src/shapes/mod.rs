@@ -1,7 +1,7 @@
 use crate::{
     intersections::{Intersection, Intersections},
     material::Material,
-    matrices::{Matrix, NoInverseError, Transform, IDENTITY},
+    matrices::{Matrix, Transform, IDENTITY},
     rays::Ray,
     Point, Vector,
 };
@@ -62,6 +62,9 @@ pub struct Shape {
     pub model: Box<dyn DynamicModel>,
 }
 
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
+pub struct NoInverseError;
+
 impl Shape {
     pub fn new(model: impl Model) -> Self {
         Shape {
@@ -73,7 +76,7 @@ impl Shape {
     }
 
     pub fn set_transform(&mut self, transform: Transform) -> Result<(), NoInverseError> {
-        let inverse = transform.inverse()?;
+        let inverse = transform.inverse().ok_or(NoInverseError)?;
         self.transform = transform;
         self.inverse = inverse;
         Ok(())

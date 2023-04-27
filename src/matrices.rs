@@ -35,9 +35,6 @@ impl<const M: usize, const N: usize> Matrix<M, N> {
     }
 }
 
-#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct NoInverseError;
-
 impl Matrix<2, 2> {
     pub fn submatrix(&self, i: usize, j: usize) -> Result<Matrix<1, 1>, MatrixIndexError> {
         if i > 1 || j > 1 {
@@ -74,10 +71,10 @@ impl Matrix<2, 2> {
         self.determinant() != 0.0
     }
 
-    pub fn inverse(&self) -> Result<Matrix<2, 2>, NoInverseError> {
+    pub fn inverse(&self) -> Option<Matrix<2, 2>> {
         let determinant = self.determinant();
         if determinant == 0.0 {
-            return Err(NoInverseError);
+            return None;
         }
 
         let mut entries = [[0.0; 2]; 2];
@@ -88,7 +85,7 @@ impl Matrix<2, 2> {
             }
         }
 
-        Ok(Matrix { entries })
+        Some(Matrix { entries })
     }
 }
 
@@ -143,10 +140,10 @@ impl Matrix<3, 3> {
         self.determinant() != 0.0
     }
 
-    pub fn inverse(&self) -> Result<Matrix<3, 3>, NoInverseError> {
+    pub fn inverse(&self) -> Option<Matrix<3, 3>> {
         let determinant = self.determinant();
         if determinant == 0.0 {
-            return Err(NoInverseError);
+            return None;
         }
 
         let mut entries = [[0.0; 3]; 3];
@@ -157,7 +154,7 @@ impl Matrix<3, 3> {
             }
         }
 
-        Ok(Matrix { entries })
+        Some(Matrix { entries })
     }
 }
 
@@ -212,10 +209,10 @@ impl Matrix<4, 4> {
         self.determinant() != 0.0
     }
 
-    pub fn inverse(&self) -> Result<Matrix<4, 4>, NoInverseError> {
+    pub fn inverse(&self) -> Option<Matrix<4, 4>> {
         let determinant = self.determinant();
         if determinant == 0.0 {
-            return Err(NoInverseError);
+            return None;
         }
 
         let mut entries = [[0.0; 4]; 4];
@@ -226,7 +223,7 @@ impl Matrix<4, 4> {
             }
         }
 
-        Ok(Matrix { entries })
+        Some(Matrix { entries })
     }
 }
 
@@ -352,8 +349,8 @@ impl Transform {
         self.matrix.invertible()
     }
 
-    pub fn inverse(&self) -> Result<Transform, NoInverseError> {
-        Ok(Transform {
+    pub fn inverse(&self) -> Option<Transform> {
+        Some(Transform {
             matrix: self.matrix.inverse()?,
         })
     }
@@ -696,7 +693,7 @@ mod test {
         ]);
         assert_eq!(
             a.inverse(),
-            Ok(Matrix::new([
+            Some(Matrix::new([
                 [-0.15385, -0.15385, -0.28205, -0.53846],
                 [-0.07692, 0.12308, 0.02564, 0.03077],
                 [0.35897, 0.35897, 0.43590, 0.92308],
@@ -715,7 +712,7 @@ mod test {
         ]);
         assert_eq!(
             a.inverse(),
-            Ok(Matrix::new([
+            Some(Matrix::new([
                 [-0.04074, -0.07778, 0.14444, -0.22222],
                 [-0.07778, 0.03333, 0.36667, -0.33333],
                 [-0.02901, -0.14630, -0.10926, 0.12963],
@@ -750,6 +747,6 @@ mod test {
             [0.0, -5.0, 1.0, -5.0],
             [0.0, 0.0, 0.0, 0.0],
         ]);
-        assert_eq!(a.inverse(), Err(NoInverseError));
+        assert_eq!(a.inverse(), None);
     }
 }
