@@ -53,23 +53,29 @@ impl<T: Model + 'static> ModelAsAny for T {
     }
 }
 
-pub trait DynamicModel: Debug + ModelAsAny {
+pub trait DynamicModel: Debug {
     fn local_intersect(&self, local_ray: &Ray) -> Vec<f64>;
 
     fn local_normal_at(&self, local_point: Point) -> Vector;
+
+    fn as_any(&self) -> &dyn Any;
 
     fn dynamic_clone(&self) -> Box<dyn DynamicModel>;
 
     fn dynamic_eq(&self, other: &dyn DynamicModel) -> bool;
 }
 
-impl<T: Model + Clone + Debug + PartialEq + 'static> DynamicModel for T {
+impl<T: Model> DynamicModel for T {
     fn local_intersect(&self, local_ray: &Ray) -> Vec<f64> {
         self.local_intersect(local_ray)
     }
 
     fn local_normal_at(&self, local_point: Point) -> Vector {
         self.local_normal_at(local_point)
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 
     fn dynamic_clone(&self) -> Box<dyn DynamicModel> {
@@ -85,7 +91,7 @@ impl<T: Model + Clone + Debug + PartialEq + 'static> DynamicModel for T {
     }
 }
 
-pub trait Model: Debug + 'static {
+pub trait Model: Clone + Debug + PartialEq + 'static {
     fn local_intersect(&self, local_ray: &Ray) -> Vec<f64>;
 
     fn local_normal_at(&self, local_point: Point) -> Vector;
@@ -100,7 +106,7 @@ pub struct Shape {
 }
 
 impl Shape {
-    pub fn new(model: impl DynamicModel) -> Self {
+    pub fn new(model: impl Model) -> Self {
         Shape {
             transform: IDENTITY,
             inverse: IDENTITY,
