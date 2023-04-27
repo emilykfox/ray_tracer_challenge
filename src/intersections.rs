@@ -1,6 +1,6 @@
-use crate::{shapes::Shape, spheres::Sphere};
+use crate::{shapes::Shape, EQUALITY_EPSILON};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Intersection<'object> {
     pub t: f64,
     pub object: &'object Shape,
@@ -9,6 +9,12 @@ pub struct Intersection<'object> {
 impl<'object> Intersection<'object> {
     pub fn new(t: f64, object: &'object Shape) -> Self {
         Intersection { t, object }
+    }
+}
+
+impl<'object> PartialEq for Intersection<'object> {
+    fn eq(&self, other: &Self) -> bool {
+        (self.t - other.t) < EQUALITY_EPSILON && std::ptr::eq(self.object, other.object)
     }
 }
 

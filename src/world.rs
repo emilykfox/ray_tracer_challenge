@@ -4,15 +4,15 @@ use crate::{
     lights::PointLight,
     material::lighting,
     rays::Ray,
-    spheres::Sphere,
+    shapes::Shape,
     Point, Vector,
 };
 
 const SHADOW_EPSILON: f64 = 0.00001;
 
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone)]
 pub struct World {
-    pub objects: Vec<Sphere>,
+    pub objects: Vec<Shape>,
     pub light: PointLight,
 }
 
@@ -69,10 +69,10 @@ impl World {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct HitInfo<'object> {
     pub t: f64,
-    pub object: &'object Sphere,
+    pub object: &'object Shape,
     pub point: Point,
     pub eyev: Vector,
     pub normal: Vector,
@@ -107,14 +107,14 @@ impl<'object> HitInfo<'object> {
 
 #[cfg(test)]
 pub(crate) fn default_world() -> World {
-    use crate::transformations::Builder;
+    use crate::{shapes::spheres::Sphere, transformations::Builder};
 
     let light = PointLight::new(Point::new(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
-    let mut s1 = Sphere::new();
+    let mut s1 = Shape::new(Sphere);
     s1.material.color = Color::new(0.8, 1.0, 0.6);
     s1.material.diffuse = 0.7;
     s1.material.specular = 0.2;
-    let mut s2 = Sphere::new();
+    let mut s2 = Shape::new(Sphere);
     s2.set_transform(Builder::new().scaling(0.5, 0.5, 0.5).transform())
         .unwrap();
     World {
@@ -144,7 +144,7 @@ mod test {
     #[test]
     fn test_default_world() {
         let light = PointLight::new(Point::new(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let mut s1 = Sphere::new();
+        let mut s1 = Shape::new(Sphere);
         s1.material.color = Color::new(0.8, 1.0, 0.6);
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;

@@ -1,18 +1,24 @@
-use std::{cell::RefCell, fmt::Debug};
+#[cfg(test)]
+use std::cell::RefCell;
+use std::fmt::Debug;
 
 use crate::{
-    intersections::Intersection,
+    intersections::Intersections,
     material::Material,
     matrices::{NoInverseError, Transform, IDENTITY},
     rays::Ray,
 };
 
-pub trait Model: 'static + Debug {
+pub mod spheres;
+
+pub trait Model: Debug {
     fn local_intersect<'shape>(
         &self,
         shape: &'shape Shape,
         local_ray: &'_ Ray,
-    ) -> Intersection<'shape>;
+    ) -> Intersections<'shape>;
+
+    fn dynamic_clone(&self) -> Box<dyn Model>;
 }
 
 #[derive(Debug)]
@@ -26,12 +32,12 @@ pub struct Shape {
 }
 
 impl Shape {
-    pub fn new(form: impl Model) -> Self {
+    pub fn new(model: impl Model) -> Self {
         Shape {
             transform: IDENTITY,
             inverse: IDENTITY,
             material: Material::default(),
-            model: Box::new(form),
+            model: Box::new(model),
             #[cfg(test)]
             saved_ray: RefCell::new(Ray::default()),
         }
@@ -44,9 +50,22 @@ impl Shape {
         Ok(())
     }
 
-    pub fn intersect(&self, ray: &Ray) -> Intersection {
+    pub fn intersect(&self, ray: &Ray) -> Intersections {
         let local_ray = ray.transformed(&self.inverse);
         self.model.local_intersect(self, &local_ray)
+    }
+}
+
+impl Clone for Shape {
+    fn clone(&self) -> Self {
+        Shape {
+            transform: self.transform.clone(),
+            inverse: self.inverse.clone(),
+            material: self.material.clone(),
+            model: self.model.dynamic_clone(),
+            #[cfg(test)]
+            saved_ray: self.saved_ray.clone(),
+        }
     }
 }
 
@@ -68,12 +87,16 @@ mod test {
             &self,
             shape: &'shape Shape,
             local_ray: &'_ Ray,
-        ) -> Intersection<'shape> {
+        ) -> Intersections<'shape> {
             #[cfg(test)]
             {
-                shape.saved_ray.set(local_ray.clone());
+                shape.saved_ray.replace(local_ray.clone());
             }
-            Intersection::new(0.0, shape)
+            Intersections::new(vec![])
+        }
+
+        fn dynamic_clone(&self) -> Box<dyn Model> {
+            Box::new(Self)
         }
     }
 
@@ -114,8 +137,8 @@ mod test {
         let mut s = Shape::new(TestModel);
         s.set_transform(scaling(2.0, 2.0, 2.0)).unwrap();
         _ = s.intersect(&r);
-        assert_eq!(s.saved_ray.origin, Point::new(0.0, 0.0, -2.5));
-        assert_eq!(s.saved_ray.direction, Vector::new(0.0, 0.0, 0.5));
+        assert_eq!(s.saved_ray.borrow().origin, Point::new(0.0, 0.0, -2.5));
+        assert_eq!(s.saved_ray.borrow().direction, Vector::new(0.0, 0.0, 0.5));
     }
 
     #[test]
@@ -124,7 +147,7 @@ mod test {
         let mut s = Shape::new(TestModel);
         s.set_transform(translation(5.0, 0.0, 0.0)).unwrap();
         _ = s.intersect(&r);
-        assert_eq!(s.saved_ray.origin, Point::new(-5.0, 0.0, -5.0));
-        assert_eq!(s.saved_ray.direction, Vector::new(0.0, 0.0, 1.0));
+        assert_eq!(s.saved_ray.borrow().origin, Point::new(-5.0, 0.0, -5.0));
+        assert_eq!(s.saved_ray.borrow().direction, Vector::new(0.0, 0.0, 1.0));
     }
 }
