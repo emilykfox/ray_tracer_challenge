@@ -6,52 +6,9 @@ use crate::{
     Point, Vector,
 };
 
-#[cfg(test)]
-use std::cell::RefCell;
 use std::{any::Any, fmt::Debug};
 
 pub mod spheres;
-
-#[cfg(test)]
-thread_local! {
-    static SAVED_RAY: RefCell<Ray> = RefCell::new(Ray::default());
-}
-
-/*
-pub trait ModelDynamicClone {
-    fn dynamic_clone(&self) -> Box<dyn Model>;
-}
-
-impl<T: Model + Clone + 'static> ModelDynamicClone for T {
-    fn dynamic_clone(&self) -> Box<dyn Model> {
-        Box::new(self.clone())
-    }
-}
-
-pub trait ModelDynamicPartialEq {
-    fn dynamic_eq(&self, other: &dyn Any) -> bool;
-}
-
-impl<T: Model + PartialEq + 'static> ModelDynamicPartialEq for T {
-    fn dynamic_eq(&self, other: &dyn Any) -> bool {
-        if let Some(other) = other.downcast_ref::<T>() {
-            self == other
-        } else {
-            false
-        }
-    }
-}
-    */
-
-pub trait ModelAsAny: 'static {
-    fn as_any(&self) -> &dyn Any;
-}
-
-impl<T: Model + 'static> ModelAsAny for T {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
 
 pub trait DynamicModel: Debug {
     fn local_intersect(&self, local_ray: &Ray) -> Vec<f64>;
@@ -190,11 +147,7 @@ mod test {
 
     impl Model for TestModel {
         fn local_intersect(&self, local_ray: &'_ Ray) -> Vec<f64> {
-            #[cfg(test)]
-            {
-                SAVED_RAY.with(|saved_ray| saved_ray.replace(local_ray.clone()));
-            }
-            vec![]
+            vec![local_ray.origin.x, local_ray.origin.y, local_ray.origin.z]
         }
 
         fn local_normal_at(&self, local_point: Point) -> Vector {
@@ -234,15 +187,26 @@ mod test {
     }
 
     #[test]
+    fn intersection_sets_object() {
+        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let s = Shape::new(TestModel);
+        let xs = s.intersect(&r);
+        assert_eq!(xs.vec.len(), 3);
+        assert!(std::ptr::eq(xs.vec[0].object, &s));
+        assert!(std::ptr::eq(xs.vec[1].object, &s));
+        assert!(std::ptr::eq(xs.vec[2].object, &s));
+    }
+
+    #[test]
     fn intersect_scaled_shape() {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let mut s = Shape::new(TestModel);
         s.set_transform(scaling(2.0, 2.0, 2.0)).unwrap();
-        _ = s.intersect(&r);
-        SAVED_RAY
-            .with(|saved_ray| assert_eq!(saved_ray.borrow().origin, Point::new(0.0, 0.0, -2.5)));
-        SAVED_RAY
-            .with(|saved_ray| assert_eq!(saved_ray.borrow().direction, Vector::new(0.0, 0.0, 0.5)));
+        let xs = s.intersect(&r);
+        assert_eq!(xs.vec.len(), 3);
+        assert_eq!(xs.vec[0].t, 0.0);
+        assert_eq!(xs.vec[1].t, 0.0);
+        assert_eq!(xs.vec[2].t, -2.5);
     }
 
     #[test]
@@ -250,11 +214,11 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let mut s = Shape::new(TestModel);
         s.set_transform(translation(5.0, 0.0, 0.0)).unwrap();
-        _ = s.intersect(&r);
-        SAVED_RAY
-            .with(|saved_ray| assert_eq!(saved_ray.borrow().origin, Point::new(-5.0, 0.0, -5.0)));
-        SAVED_RAY
-            .with(|saved_ray| assert_eq!(saved_ray.borrow().direction, Vector::new(0.0, 0.0, 1.0)));
+        let xs = s.intersect(&r);
+        assert_eq!(xs.vec.len(), 3);
+        assert_eq!(xs.vec[0].t, -5.0);
+        assert_eq!(xs.vec[1].t, 0.0);
+        assert_eq!(xs.vec[2].t, -5.0);
     }
 
     #[test]

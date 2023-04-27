@@ -89,8 +89,7 @@ impl<'object> HitInfo<'object> {
         let object = intersection.object;
         let point = ray.position(t);
         let eyev = -ray.direction;
-        todo!();
-        /* let naive_normal = object.normal_at(point);
+        let naive_normal = object.normal_at(point);
         let inside = Vector::dot(naive_normal, eyev) < 0.0;
         let normal = if inside { -naive_normal } else { naive_normal };
         let over_point = point + normal * SHADOW_EPSILON;
@@ -103,7 +102,6 @@ impl<'object> HitInfo<'object> {
             inside,
             over_point,
         }
-        */
     }
 }
 
