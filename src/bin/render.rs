@@ -6,8 +6,8 @@ use ray_tracer_challenge::{
     canvas::Color,
     lights::PointLight,
     material::Material,
-    shapes::{Shape, Sphere},
-    transformations::{scaling, translation, view_transform, Builder},
+    shapes::{Plane, Shape, Sphere},
+    transformations::{translation, view_transform, Builder},
     world::World,
     Point, Vector,
 };
@@ -27,37 +27,10 @@ struct Args {
 fn main() -> std::io::Result<()> {
     let args = Args::parse();
 
-    let mut floor = Shape::new(Sphere);
-    floor.set_transform(scaling(10.0, 0.01, 10.0)).unwrap();
+    let mut floor = Shape::new(Plane);
     floor.material = Material::new();
     floor.material.color = Color::new(1.0, 0.9, 0.9);
     floor.material.specular = 0.0;
-
-    let mut left_wall = Shape::new(Sphere);
-    left_wall
-        .set_transform(
-            Builder::new()
-                .scaling(10.0, 0.01, 10.0)
-                .rotation_x(PI / 2.0)
-                .rotation_y(-PI / 4.0)
-                .translation(0.0, 0.0, 5.0)
-                .transform(),
-        )
-        .unwrap();
-    left_wall.material = floor.material.clone();
-
-    let mut right_wall = Shape::new(Sphere);
-    right_wall
-        .set_transform(
-            Builder::new()
-                .scaling(10.0, 0.01, 10.0)
-                .rotation_x(PI / 2.0)
-                .rotation_y(PI / 4.0)
-                .translation(0.0, 0.0, 5.0)
-                .transform(),
-        )
-        .unwrap();
-    right_wall.material = floor.material.clone();
 
     let mut middle = Shape::new(Sphere);
     middle.set_transform(translation(-0.5, 1.0, 0.5)).unwrap();
@@ -94,7 +67,7 @@ fn main() -> std::io::Result<()> {
     left.material.specular = 0.3;
 
     let mut world = World::new();
-    world.objects = vec![floor, left_wall, right_wall, middle, right, left];
+    world.objects = vec![floor, middle, right, left];
     world.light = PointLight::new(Point::new(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
 
     let mut camera = Camera::new(args.width, args.height, PI / 3.0);
