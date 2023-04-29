@@ -3,7 +3,7 @@ use std::f64::consts::PI;
 
 use ray_tracer_challenge::{
     camera::Camera,
-    canvas::{Color, BLACK, WHITE},
+    canvas::Color,
     lights::PointLight,
     materials::Material,
     patterns::StripePattern,
