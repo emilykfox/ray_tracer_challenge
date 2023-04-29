@@ -3,9 +3,10 @@ use std::f64::consts::PI;
 
 use ray_tracer_challenge::{
     camera::Camera,
-    canvas::Color,
+    canvas::{Color, BLACK, WHITE},
     lights::PointLight,
     materials::Material,
+    patterns::StripePattern,
     shapes::{Plane, Shape, Sphere},
     transformations::{translation, view_transform, Builder},
     world::World,
@@ -31,6 +32,7 @@ fn main() -> std::io::Result<()> {
     floor.material = Material::new();
     floor.material.color = Color::new(1.0, 0.9, 0.9);
     floor.material.specular = 0.0;
+    floor.material.pattern = Some(StripePattern::new(WHITE, BLACK));
 
     let mut middle = Shape::new(Sphere);
     middle.set_transform(translation(-0.5, 1.0, 0.5)).unwrap();
@@ -38,6 +40,7 @@ fn main() -> std::io::Result<()> {
     middle.material.color = Color::new(0.1, 1.0, 0.5);
     middle.material.diffuse = 0.7;
     middle.material.specular = 0.3;
+    middle.material.pattern = Some(StripePattern::new(WHITE, BLACK));
 
     let mut right = Shape::new(Sphere);
     right
