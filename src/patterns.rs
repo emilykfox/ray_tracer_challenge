@@ -1,28 +1,59 @@
-use crate::{canvas::Color, Point};
+use crate::{
+    canvas::Color,
+    matrices::{Transform, IDENTITY},
+    shapes::Shape,
+    Point,
+};
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct StripePattern {
     pub a: Color,
     pub b: Color,
+    transform: Transform,
+    inverse: Transform,
 }
+
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct NoInverseTransformError;
 
 impl StripePattern {
     pub fn new(a: Color, b: Color) -> Self {
-        StripePattern { a, b }
+        StripePattern {
+            a,
+            b,
+            transform: IDENTITY,
+            inverse: IDENTITY,
+        }
     }
 
-    pub fn stripe_at(&self, point: Point) -> Color {
+    pub fn set_transform(&mut self, transform: Transform) -> Result<(), NoInverseTransformError> {
+        self.inverse = transform.inverse().ok_or(NoInverseTransformError)?;
+        self.transform = transform;
+        Ok(())
+    }
+
+    fn stripe_at(&self, point: Point) -> Color {
         if point.x.floor() as i64 % 2 == 0 {
             self.a
         } else {
             self.b
         }
     }
+
+    pub fn stripe_at_object(&self, object: &Shape, point: Point) -> Color {
+        let object_point = object.get_inverse_transform() * point;
+        let pattern_point = &self.inverse * object_point;
+        self.stripe_at(pattern_point)
+    }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::canvas::{BLACK, WHITE};
+    use crate::{
+        canvas::{BLACK, WHITE},
+        shapes::Sphere,
+        transformations::{scaling, translation},
+    };
 
     use super::*;
 
@@ -58,5 +89,33 @@ mod test {
         assert_eq!(pattern.stripe_at(Point::new(-0.1, 0.0, 0.0)), BLACK);
         assert_eq!(pattern.stripe_at(Point::new(-1.0, 0.0, 0.0)), BLACK);
         assert_eq!(pattern.stripe_at(Point::new(-1.1, 0.0, 0.0)), WHITE);
+    }
+
+    #[test]
+    fn stripes_with_object_transformation() {
+        let mut object = Shape::new(Sphere);
+        object.set_transform(scaling(2.0, 2.0, 2.0)).unwrap();
+        let pattern = StripePattern::new(WHITE, BLACK);
+        let c = pattern.stripe_at_object(&object, Point::new(1.5, 0.0, 0.0));
+        assert_eq!(c, WHITE);
+    }
+
+    #[test]
+    fn stripes_with_pattern_transformation() {
+        let object = Shape::new(Sphere);
+        let mut pattern = StripePattern::new(WHITE, BLACK);
+        pattern.set_transform(scaling(2.0, 2.0, 2.0)).unwrap();
+        let c = pattern.stripe_at_object(&object, Point::new(1.5, 0.0, 0.0));
+        assert_eq!(c, WHITE);
+    }
+
+    #[test]
+    fn stripes_with_object_and_pattern_transformation() {
+        let mut object = Shape::new(Sphere);
+        object.set_transform(scaling(2.0, 2.0, 2.0)).unwrap();
+        let mut pattern = StripePattern::new(WHITE, BLACK);
+        pattern.set_transform(translation(0.5, 0.0, 0.0)).unwrap();
+        let c = pattern.stripe_at_object(&object, Point::new(2.5, 0.0, 0.0));
+        assert_eq!(c, WHITE);
     }
 }

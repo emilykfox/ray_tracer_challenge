@@ -35,6 +35,7 @@ impl World {
         let is_shadowed = self.is_shadowed(hit_info.over_point);
         lighting(
             &hit_info.object.material,
+            hit_info.object,
             &self.light,
             hit_info.point,
             hit_info.eyev,

@@ -86,6 +86,14 @@ impl Shape {
         Ok(())
     }
 
+    pub fn get_transform(&self) -> &Transform {
+        &self.transform
+    }
+
+    pub fn get_inverse_transform(&self) -> &Transform {
+        &self.inverse
+    }
+
     pub fn intersect(&self, ray: &Ray) -> Intersections {
         let local_ray = ray.transformed(&self.inverse);
         Intersections::new(
