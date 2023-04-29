@@ -1,5 +1,6 @@
 use crate::{canvas::Color, Point};
 
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct StripePattern {
     pub a: Color,
     pub b: Color,

@@ -1,4 +1,4 @@
-use crate::{canvas::Color, lights::PointLight, Point, Vector};
+use crate::{canvas::Color, lights::PointLight, patterns::StripePattern, Point, Vector};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Material {
@@ -7,6 +7,7 @@ pub struct Material {
     pub diffuse: f64,
     pub specular: f64,
     pub shininess: f64,
+    pub pattern: Option<StripePattern>,
 }
 
 impl Material {
@@ -23,6 +24,7 @@ impl Default for Material {
             diffuse: 0.9,
             specular: 0.9,
             shininess: 200.0,
+            pattern: None,
         }
     }
 }
@@ -35,7 +37,11 @@ pub fn lighting(
     normal: Vector,
     in_shadow: bool,
 ) -> Color {
-    let effective_color = material.color * light.intensity;
+    let color = material
+        .pattern
+        .as_ref()
+        .map_or(material.color, |pattern| pattern.stripe_at(point));
+    let effective_color = color * light.intensity;
     let lightv = (light.position - point).normalize();
 
     let ambient = effective_color * material.ambient;
@@ -67,7 +73,12 @@ pub fn lighting(
 
 #[cfg(test)]
 mod test {
-    use crate::{canvas::Color, lights::PointLight, Point, Vector};
+    use crate::{
+        canvas::{Color, BLACK, WHITE},
+        lights::PointLight,
+        patterns::StripePattern,
+        Point, Vector,
+    };
 
     use super::*;
 
@@ -146,5 +157,23 @@ mod test {
         let in_shadow = true;
         let result = lighting(&m, &light, position, eyev, normalv, in_shadow);
         assert_eq!(result, Color::new(0.1, 0.1, 0.1));
+    }
+
+    #[test]
+    fn lighting_with_pattern() {
+        let m = Material {
+            pattern: Some(StripePattern::new(WHITE, BLACK)),
+            ambient: 1.0,
+            diffuse: 0.0,
+            specular: 0.0,
+            ..Material::default()
+        };
+        let eyev = Vector::new(0.0, 0.0, -1.0);
+        let normal = Vector::new(0.0, 0.0, -1.0);
+        let light = PointLight::new(Point::new(0.0, 0.0, -10.0), WHITE);
+        let c1 = lighting(&m, &light, Point::new(0.9, 0.0, 0.0), eyev, normal, false);
+        let c2 = lighting(&m, &light, Point::new(1.1, 0.0, 0.0), eyev, normal, false);
+        assert_eq!(c1, WHITE);
+        assert_eq!(c2, BLACK);
     }
 }
