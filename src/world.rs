@@ -2,7 +2,7 @@ use crate::{
     canvas::Color,
     intersections::{Intersection, Intersections},
     lights::PointLight,
-    material::lighting,
+    materials::lighting,
     rays::Ray,
     shapes::Shape,
     Point, Vector,

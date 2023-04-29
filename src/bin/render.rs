@@ -5,7 +5,7 @@ use ray_tracer_challenge::{
     camera::Camera,
     canvas::Color,
     lights::PointLight,
-    material::Material,
+    materials::Material,
     shapes::{Plane, Shape, Sphere},
     transformations::{translation, view_transform, Builder},
     world::World,

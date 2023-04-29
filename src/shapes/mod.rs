@@ -1,6 +1,6 @@
 use crate::{
     intersections::{Intersection, Intersections},
-    material::Material,
+    materials::Material,
     matrices::{Matrix, Transform, IDENTITY},
     rays::Ray,
     Point, Vector,
