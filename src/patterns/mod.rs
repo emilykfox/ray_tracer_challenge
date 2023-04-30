@@ -1,8 +1,8 @@
 use std::{any::Any, fmt::Debug};
 
-pub mod stripe_pattern;
+mod stripes;
 
-pub use stripe_pattern::StripePattern;
+pub use stripes::Stripes;
 
 use crate::{
     canvas::Color,
@@ -75,6 +75,24 @@ impl Pattern {
         let shape_point = shape.get_inverse_transform() * point;
         let pattern_point = &self.inverse * shape_point;
         self.model.at(pattern_point)
+    }
+}
+
+impl Clone for Pattern {
+    fn clone(&self) -> Self {
+        Pattern {
+            transform: self.transform.clone(),
+            inverse: self.inverse.clone(),
+            model: self.model.dynamic_clone(),
+        }
+    }
+}
+
+impl PartialEq for Pattern {
+    fn eq(&self, other: &Self) -> bool {
+        self.transform == other.transform
+            && self.inverse == other.inverse
+            && self.model.dynamic_eq(other.model.as_ref())
     }
 }
 
