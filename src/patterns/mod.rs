@@ -1,7 +1,9 @@
 use std::{any::Any, fmt::Debug};
 
+mod gradients;
 mod stripes;
 
+pub use gradients::Gradient;
 pub use stripes::Stripes;
 
 use crate::{
