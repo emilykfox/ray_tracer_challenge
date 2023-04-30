@@ -14,19 +14,19 @@ mod spheres;
 pub use planes::Plane;
 pub use spheres::Sphere;
 
-pub trait DynamicModel: Debug {
+pub trait DynamicShapeModel: Debug {
     fn local_intersect(&self, local_ray: &Ray) -> Vec<f64>;
 
     fn local_normal_at(&self, local_point: Point) -> Vector;
 
     fn as_any(&self) -> &dyn Any;
 
-    fn dynamic_clone(&self) -> Box<dyn DynamicModel>;
+    fn dynamic_clone(&self) -> Box<dyn DynamicShapeModel>;
 
-    fn dynamic_eq(&self, other: &dyn DynamicModel) -> bool;
+    fn dynamic_eq(&self, other: &dyn DynamicShapeModel) -> bool;
 }
 
-impl<T: Model> DynamicModel for T {
+impl<T: ShapeModel> DynamicShapeModel for T {
     fn local_intersect(&self, local_ray: &Ray) -> Vec<f64> {
         self.local_intersect(local_ray)
     }
@@ -39,11 +39,11 @@ impl<T: Model> DynamicModel for T {
         self
     }
 
-    fn dynamic_clone(&self) -> Box<dyn DynamicModel> {
+    fn dynamic_clone(&self) -> Box<dyn DynamicShapeModel> {
         Box::new(self.clone())
     }
 
-    fn dynamic_eq(&self, other: &dyn DynamicModel) -> bool {
+    fn dynamic_eq(&self, other: &dyn DynamicShapeModel) -> bool {
         if let Some(other) = other.as_any().downcast_ref::<Self>() {
             self == other
         } else {
@@ -52,7 +52,7 @@ impl<T: Model> DynamicModel for T {
     }
 }
 
-pub trait Model: Clone + Debug + PartialEq + 'static {
+pub trait ShapeModel: Clone + Debug + PartialEq + 'static {
     fn local_intersect(&self, local_ray: &Ray) -> Vec<f64>;
 
     fn local_normal_at(&self, local_point: Point) -> Vector;
@@ -63,14 +63,14 @@ pub struct Shape {
     transform: Transform,
     inverse: Transform,
     pub material: Material,
-    pub model: Box<dyn DynamicModel>,
+    pub model: Box<dyn DynamicShapeModel>,
 }
 
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct NoInverseError;
 
 impl Shape {
-    pub fn new(model: impl Model) -> Self {
+    pub fn new(model: impl ShapeModel) -> Self {
         Shape {
             transform: IDENTITY,
             inverse: IDENTITY,
@@ -160,7 +160,7 @@ mod test {
     #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
     struct TestModel;
 
-    impl Model for TestModel {
+    impl ShapeModel for TestModel {
         fn local_intersect(&self, local_ray: &'_ Ray) -> Vec<f64> {
             vec![local_ray.origin.x, local_ray.origin.y, local_ray.origin.z]
         }

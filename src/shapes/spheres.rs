@@ -1,11 +1,11 @@
 use crate::{rays::Ray, Point, Vector};
 
-use super::Model;
+use super::ShapeModel;
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct Sphere;
 
-impl Model for Sphere {
+impl ShapeModel for Sphere {
     fn local_intersect(&self, local_ray: &'_ Ray) -> Vec<f64> {
         let sphere_to_ray = local_ray.origin - Point::new(0.0, 0.0, 0.0);
 

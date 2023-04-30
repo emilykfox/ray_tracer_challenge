@@ -1,13 +1,13 @@
 use crate::Vector;
 
-use super::Model;
+use super::ShapeModel;
 
 const PARALLEL_EPSILON: f64 = 0.00001;
 
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct Plane;
 
-impl Model for Plane {
+impl ShapeModel for Plane {
     fn local_intersect(&self, local_ray: &crate::rays::Ray) -> Vec<f64> {
         if local_ray.direction.y.abs() < PARALLEL_EPSILON {
             vec![]
