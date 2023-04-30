@@ -6,7 +6,7 @@ use ray_tracer_challenge::{
     canvas::Color,
     lights::PointLight,
     materials::Material,
-    patterns::{Pattern, Stripes},
+    patterns::{Checkers, Gradient, Pattern},
     shapes::{Plane, Shape, Sphere},
     transformations::{translation, view_transform, Builder},
     world::World,
@@ -18,10 +18,10 @@ struct Args {
     #[arg(long, default_value = "image.ppm")]
     output: String,
 
-    #[arg(long, default_value = "100")]
+    #[arg(long, default_value = "480")]
     width: usize,
 
-    #[arg(long, default_value = "50")]
+    #[arg(long, default_value = "270")]
     height: usize,
 }
 
@@ -32,7 +32,7 @@ fn main() -> std::io::Result<()> {
     floor.material = Material::new();
     floor.material.color = Color::new(1.0, 0.9, 0.9);
     floor.material.specular = 0.0;
-    floor.material.pattern = Some(Pattern::new(Stripes::new(
+    floor.material.pattern = Some(Pattern::new(Checkers::new(
         Color::new(1.0, 0.9, 0.9),
         Color::new(0.0, 0.1, 0.1),
     )));
@@ -43,15 +43,16 @@ fn main() -> std::io::Result<()> {
     middle.material.color = Color::new(0.1, 1.0, 0.5);
     middle.material.diffuse = 0.7;
     middle.material.specular = 0.3;
-    let mut middle_pattern = Pattern::new(Stripes::new(
+    let mut middle_pattern = Pattern::new(Gradient::new(
         Color::new(0.1, 1.0, 0.5),
         Color::new(0.9, 0.0, 0.5),
     ));
     middle_pattern
         .set_transform(
             Builder::new()
+                .scaling(2.0, 2.0, 2.0)
+                .translation(-1.0, 0.0, 0.0)
                 .rotation_z(PI / 4.0)
-                .scaling(0.33, 0.33, 0.33)
                 .transform(),
         )
         .expect("no inverse for transform");
