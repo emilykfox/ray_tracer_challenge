@@ -16,7 +16,9 @@ impl Gradient {
 
 impl PatternModel for Gradient {
     fn at(&self, point: Point) -> Color {
-        self.a + (self.b - self.a) * (point.x - point.x.floor())
+        let distance = self.b - self.a;
+        let fraction = point.x - point.x.floor();
+        self.a + distance * fraction
     }
 }
 
