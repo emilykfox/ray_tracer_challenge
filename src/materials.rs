@@ -38,9 +38,10 @@ pub fn lighting(
     normal: Vector,
     in_shadow: bool,
 ) -> Color {
-    let color = material.pattern.as_ref().map_or(material.color, |pattern| {
-        pattern.stripe_at_object(object, point)
-    });
+    let color = material
+        .pattern
+        .as_ref()
+        .map_or(material.color, |pattern| pattern.at_shape(object, point));
     let effective_color = color * light.intensity;
     let lightv = (light.position - point).normalize();
 
@@ -76,7 +77,7 @@ mod test {
     use crate::{
         canvas::{Color, BLACK, WHITE},
         lights::PointLight,
-        patterns::StripePattern,
+        patterns::Stripes,
         shapes::Sphere,
         Point, Vector,
     };
@@ -211,7 +212,7 @@ mod test {
     #[test]
     fn lighting_with_pattern() {
         let m = Material {
-            pattern: Some(StripePattern::new(WHITE, BLACK)),
+            pattern: Some(Pattern::new(Stripes::new(WHITE, BLACK))),
             ambient: 1.0,
             diffuse: 0.0,
             specular: 0.0,

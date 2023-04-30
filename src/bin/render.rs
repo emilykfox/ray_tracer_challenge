@@ -6,7 +6,7 @@ use ray_tracer_challenge::{
     canvas::Color,
     lights::PointLight,
     materials::Material,
-    patterns::StripePattern,
+    patterns::{Pattern, Stripes},
     shapes::{Plane, Shape, Sphere},
     transformations::{translation, view_transform, Builder},
     world::World,
@@ -32,10 +32,10 @@ fn main() -> std::io::Result<()> {
     floor.material = Material::new();
     floor.material.color = Color::new(1.0, 0.9, 0.9);
     floor.material.specular = 0.0;
-    floor.material.pattern = Some(StripePattern::new(
+    floor.material.pattern = Some(Pattern::new(Stripes::new(
         Color::new(1.0, 0.9, 0.9),
         Color::new(0.0, 0.1, 0.1),
-    ));
+    )));
 
     let mut middle = Shape::new(Sphere);
     middle.set_transform(translation(-0.5, 1.0, 0.5)).unwrap();
@@ -43,8 +43,10 @@ fn main() -> std::io::Result<()> {
     middle.material.color = Color::new(0.1, 1.0, 0.5);
     middle.material.diffuse = 0.7;
     middle.material.specular = 0.3;
-    let mut middle_pattern =
-        StripePattern::new(Color::new(0.1, 1.0, 0.5), Color::new(0.9, 0.0, 0.5));
+    let mut middle_pattern = Pattern::new(Stripes::new(
+        Color::new(0.1, 1.0, 0.5),
+        Color::new(0.9, 0.0, 0.5),
+    ));
     middle_pattern
         .set_transform(
             Builder::new()

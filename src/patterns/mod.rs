@@ -78,6 +78,24 @@ impl Pattern {
     }
 }
 
+impl Clone for Pattern {
+    fn clone(&self) -> Self {
+        Pattern {
+            transform: self.transform.clone(),
+            inverse: self.inverse.clone(),
+            model: self.model.dynamic_clone(),
+        }
+    }
+}
+
+impl PartialEq for Pattern {
+    fn eq(&self, other: &Self) -> bool {
+        self.transform == other.transform
+            && self.inverse == other.inverse
+            && self.model.dynamic_eq(other.model.as_ref())
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::{
