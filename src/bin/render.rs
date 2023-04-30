@@ -6,7 +6,7 @@ use ray_tracer_challenge::{
     canvas::Color,
     lights::PointLight,
     materials::Material,
-    patterns::{Checkers, Gradient, Pattern},
+    patterns::{Checkers, Gradient, Pattern, Rings},
     shapes::{Plane, Shape, Sphere},
     transformations::{translation, view_transform, Builder},
     world::World,
@@ -71,6 +71,20 @@ fn main() -> std::io::Result<()> {
     right.material.color = Color::new(0.5, 1.0, 0.1);
     right.material.diffuse = 0.7;
     right.material.specular = 0.3;
+    let mut right_pattern = Pattern::new(Rings::new(
+        Color::new(0.5, 1.0, 0.1),
+        Color::new(0.3, 0.8, 0.3),
+    ));
+    right_pattern
+        .set_transform(
+            Builder::new()
+                .scaling(0.3, 0.1, 0.1)
+                .shearing(0.2, 0.0, 0.0, 0.0, 0.0, 0.0)
+                .rotation_x(PI / 2.0)
+                .transform(),
+        )
+        .expect("no inverse for transform");
+    right.material.pattern = Some(right_pattern);
 
     let mut left = Shape::new(Sphere);
     left.set_transform(
