@@ -1,6 +1,4 @@
-use crate::{
-    canvas::Color, lights::PointLight, patterns::StripePattern, shapes::Shape, Point, Vector,
-};
+use crate::{canvas::Color, lights::PointLight, patterns::Pattern, shapes::Shape, Point, Vector};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Material {
@@ -9,7 +7,7 @@ pub struct Material {
     pub diffuse: f64,
     pub specular: f64,
     pub shininess: f64,
-    pub pattern: Option<StripePattern>,
+    pub pattern: Option<Pattern>,
 }
 
 impl Material {

@@ -1,8 +1,8 @@
 use std::{any::Any, fmt::Debug};
 
-pub mod stripe_pattern;
+mod stripes;
 
-pub use stripe_pattern::StripePattern;
+pub use stripes::Stripes;
 
 use crate::{
     canvas::Color,
