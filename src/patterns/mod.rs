@@ -1,9 +1,11 @@
 use std::{any::Any, fmt::Debug};
 
+mod checkers;
 mod gradients;
 mod rings;
 mod stripes;
 
+pub use checkers::Checkers;
 pub use gradients::Gradient;
 pub use rings::Rings;
 pub use stripes::Stripes;
