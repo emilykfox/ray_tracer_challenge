@@ -36,9 +36,26 @@ fn main() -> std::io::Result<()> {
         Color::new(1.0, 0.9, 0.9),
         Color::new(0.0, 0.1, 0.1),
     )));
+    floor.material.reflective = 0.8;
+
+    let mut back_wall = Shape::new(Plane);
+    back_wall
+        .set_transform(
+            Builder::new()
+                .rotation_x(PI / 2.0)
+                .translation(0.0, 0.0, 5.0)
+                .transform(),
+        )
+        .unwrap();
+    back_wall.material = Material::new();
+    back_wall.material.color = Color::new(1.0, 1.0, 1.0);
+    back_wall.material.diffuse = 0.2;
+    back_wall.material.ambient = 0.1;
+    back_wall.material.specular = 0.0;
+    back_wall.material.reflective = 1.0;
 
     let mut middle = Shape::new(Sphere);
-    middle.set_transform(translation(-0.5, 1.0, 0.5)).unwrap();
+    middle.set_transform(translation(-0.5, 1.0, 3.0)).unwrap();
     middle.material = Material::new();
     middle.material.color = Color::new(0.1, 1.0, 0.5);
     middle.material.diffuse = 0.7;
@@ -98,9 +115,10 @@ fn main() -> std::io::Result<()> {
     left.material.color = Color::new(1.0, 0.8, 0.1);
     left.material.diffuse = 0.7;
     left.material.specular = 0.3;
+    left.material.reflective = 0.2;
 
     let mut world = World::new();
-    world.objects = vec![floor, middle, right, left];
+    world.objects = vec![floor, back_wall, middle, right, left];
     world.light = PointLight::new(Point::new(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
 
     let mut camera = Camera::new(args.width, args.height, PI / 3.0);
