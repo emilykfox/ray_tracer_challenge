@@ -68,6 +68,17 @@ impl World {
             false
         }
     }
+
+    pub fn reflected_color(&self, hit_info: &HitInfo) -> Color {
+        if hit_info.object.material.reflective == 0.0 {
+            return Color::new(0.0, 0.0, 0.0);
+        }
+
+        let reflect_ray = Ray::new(hit_info.over_point, hit_info.reflectv);
+        let color = self.color_from(&reflect_ray);
+
+        color * hit_info.object.material.reflective
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -329,5 +340,36 @@ mod test {
             hit_info.reflectv,
             Vector::new(0.0, 2_f64.sqrt() / 2.0, 2_f64.sqrt() / 2.0)
         );
+    }
+
+    #[test]
+    fn reflected_color_nonreflective_material() {
+        let mut w = default_world();
+        let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
+        let shape = &mut w.objects[1];
+        shape.material.ambient = 1.0;
+        let shape = &w.objects[1];
+        let i = Intersection::new(1.0, shape);
+        let hit_info = HitInfo::prepare(&i, &r);
+        let color = w.reflected_color(&hit_info);
+        assert_eq!(color, Color::new(0.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn reflected_color_reflective_material() {
+        let mut w = default_world();
+        let mut shape = Shape::new(Plane);
+        shape.material.reflective = 0.5;
+        shape.set_transform(translation(0.0, -1.0, 0.0)).unwrap();
+        w.objects.push(shape);
+        let shape = &w.objects[2];
+        let r = Ray::new(
+            Point::new(0.0, 0.0, -3.0),
+            Vector::new(0.0, -(2_f64.sqrt()) / 2.0, 2_f64.sqrt() / 2.0),
+        );
+        let i = Intersection::new(2_f64.sqrt(), shape);
+        let hit_info = HitInfo::prepare(&i, &r);
+        let color = w.reflected_color(&hit_info);
+        assert_eq!(color, Color::new(0.19032, 0.2379, 0.14274));
     }
 }

@@ -13,4 +13,4 @@ pub mod world;
 
 pub use tuples::{Point, Vector};
 
-const EQUALITY_EPSILON: f64 = 0.00001;
+const EQUALITY_EPSILON: f64 = 0.0001;

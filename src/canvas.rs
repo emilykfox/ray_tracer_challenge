@@ -18,9 +18,9 @@ impl Color {
 
 impl PartialEq for Color {
     fn eq(&self, other: &Self) -> bool {
-        (self.red - other.red) < EQUALITY_EPSILON
-            && (self.green - other.green) < EQUALITY_EPSILON
-            && (self.blue - other.blue) < EQUALITY_EPSILON
+        (self.red - other.red).abs() < EQUALITY_EPSILON
+            && (self.green - other.green).abs() < EQUALITY_EPSILON
+            && (self.blue - other.blue).abs() < EQUALITY_EPSILON
     }
 }
 
