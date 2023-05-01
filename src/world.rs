@@ -9,6 +9,7 @@ use crate::{
 };
 
 const SHADOW_EPSILON: f64 = 0.00001;
+pub const RECURSION_DEPTH: usize = 5;
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct World {
@@ -31,7 +32,7 @@ impl World {
         Intersections::new(vec)
     }
 
-    pub fn shade_hit(&self, hit_info: &HitInfo) -> Color {
+    pub fn shade_hit(&self, hit_info: &HitInfo, remaining: usize) -> Color {
         let is_shadowed = self.is_shadowed(hit_info.over_point);
         let surface = lighting(
             &hit_info.object.material,
@@ -43,19 +44,19 @@ impl World {
             is_shadowed,
         );
 
-        let reflected = self.reflected_color(hit_info);
+        let reflected = self.reflected_color(hit_info, remaining);
 
         surface + reflected
     }
 
-    pub fn color_from(&self, ray: &Ray) -> Color {
+    pub fn color_from(&self, ray: &Ray, remaining: usize) -> Color {
         let intersections = self.intersect(ray);
         let hit = intersections.hit();
         let Some(hit) = hit else {
             return Color::default();
         };
         let hit_info = HitInfo::prepare(hit, ray);
-        self.shade_hit(&hit_info)
+        self.shade_hit(&hit_info, remaining)
     }
 
     pub fn is_shadowed(&self, point: Point) -> bool {
@@ -73,13 +74,13 @@ impl World {
         }
     }
 
-    pub fn reflected_color(&self, hit_info: &HitInfo) -> Color {
-        if hit_info.object.material.reflective == 0.0 {
+    pub fn reflected_color(&self, hit_info: &HitInfo, remaining: usize) -> Color {
+        if remaining == 0 || hit_info.object.material.reflective == 0.0 {
             return Color::new(0.0, 0.0, 0.0);
         }
 
         let reflect_ray = Ray::new(hit_info.over_point, hit_info.reflectv);
-        let color = self.color_from(&reflect_ray);
+        let color = self.color_from(&reflect_ray, remaining - 1);
 
         color * hit_info.object.material.reflective
     }
@@ -231,7 +232,7 @@ mod test {
         let shape = &w.objects[0];
         let i = Intersection::new(4.0, shape);
         let hit_info = HitInfo::prepare(&i, &r);
-        let c = w.shade_hit(&hit_info);
+        let c = w.shade_hit(&hit_info, RECURSION_DEPTH);
         assert_eq!(c, Color::new(0.38066, 0.47583, 0.2855));
     }
 
@@ -243,7 +244,7 @@ mod test {
         let shape = &w.objects[1];
         let i = Intersection::new(0.5, shape);
         let hit_info = HitInfo::prepare(&i, &r);
-        let c = w.shade_hit(&hit_info);
+        let c = w.shade_hit(&hit_info, RECURSION_DEPTH);
         assert_eq!(c, Color::new(0.90498, 0.90498, 0.90498));
     }
 
@@ -251,7 +252,7 @@ mod test {
     fn color_from_miss() {
         let w = default_world();
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 1.0, 0.0));
-        let c = w.color_from(&r);
+        let c = w.color_from(&r, RECURSION_DEPTH);
         assert_eq!(c, Color::new(0.0, 0.0, 0.0));
     }
 
@@ -259,7 +260,7 @@ mod test {
     fn color_from_hit() {
         let w = default_world();
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let c = w.color_from(&r);
+        let c = w.color_from(&r, RECURSION_DEPTH);
         assert_eq!(c, Color::new(0.38066, 0.47583, 0.2855));
     }
 
@@ -272,7 +273,7 @@ mod test {
         inner.material.ambient = 1.0;
         let inner = &w.objects[1];
         let r = Ray::new(Point::new(0.0, 0.0, 0.75), Vector::new(0.0, 0.0, -1.0));
-        let c = w.color_from(&r);
+        let c = w.color_from(&r, RECURSION_DEPTH);
         assert_eq!(c, inner.material.color);
     }
 
@@ -316,7 +317,7 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, 5.0), Vector::new(0.0, 0.0, 1.0));
         let i = Intersection::new(4.0, &w.objects[1]);
         let hit_info = HitInfo::prepare(&i, &r);
-        let c = w.shade_hit(&hit_info);
+        let c = w.shade_hit(&hit_info, RECURSION_DEPTH);
         assert_eq!(c, Color::new(0.1, 0.1, 0.1));
     }
 
@@ -355,7 +356,7 @@ mod test {
         let shape = &w.objects[1];
         let i = Intersection::new(1.0, shape);
         let hit_info = HitInfo::prepare(&i, &r);
-        let color = w.reflected_color(&hit_info);
+        let color = w.reflected_color(&hit_info, RECURSION_DEPTH);
         assert_eq!(color, Color::new(0.0, 0.0, 0.0));
     }
 
@@ -373,7 +374,7 @@ mod test {
         );
         let i = Intersection::new(2_f64.sqrt(), shape);
         let hit_info = HitInfo::prepare(&i, &r);
-        let color = w.reflected_color(&hit_info);
+        let color = w.reflected_color(&hit_info, RECURSION_DEPTH);
         assert_eq!(color, Color::new(0.19032, 0.2379, 0.14274));
     }
 
@@ -391,7 +392,41 @@ mod test {
         );
         let i = Intersection::new(2_f64.sqrt(), shape);
         let hit_info = HitInfo::prepare(&i, &r);
-        let color = w.shade_hit(&hit_info);
+        let color = w.shade_hit(&hit_info, RECURSION_DEPTH);
         assert_eq!(color, Color::new(0.87677, 0.92436, 0.82918));
+    }
+
+    #[test]
+    fn mutually_reflective_surfaces() {
+        let mut w = World::new();
+        w.light = PointLight::new(Point::new(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0));
+        let mut lower = Shape::new(Plane);
+        lower.material.reflective = 1.0;
+        lower.set_transform(translation(0.0, -1.0, 0.0)).unwrap();
+        w.objects.push(lower);
+        let mut upper = Shape::new(Plane);
+        upper.material.reflective = 1.0;
+        upper.set_transform(translation(0.0, 1.0, 0.0)).unwrap();
+        w.objects.push(upper);
+        let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 1.0, 0.0));
+        w.color_from(&r, RECURSION_DEPTH);
+    }
+
+    #[test]
+    fn reflected_color_at_max_recursive_depth() {
+        let mut w = default_world();
+        let mut shape = Shape::new(Plane);
+        shape.material.reflective = 0.5;
+        shape.set_transform(translation(0.0, -1.0, 0.0)).unwrap();
+        w.objects.push(shape);
+        let shape = &w.objects[2];
+        let r = Ray::new(
+            Point::new(0.0, 0.0, -3.0),
+            Vector::new(0.0, -(2_f64.sqrt()) / 2.0, 2_f64.sqrt() / 2.0),
+        );
+        let i = Intersection::new(2_f64.sqrt(), shape);
+        let hit_info = HitInfo::prepare(&i, &r);
+        let color = w.reflected_color(&hit_info, 0);
+        assert_eq!(color, Color::new(0.0, 0.0, 0.0));
     }
 }

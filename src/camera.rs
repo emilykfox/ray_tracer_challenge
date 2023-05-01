@@ -2,7 +2,7 @@ use crate::{
     canvas::{Canvas, PixelOutOfBoundsError},
     matrices::{Transform, IDENTITY},
     rays::Ray,
-    world::World,
+    world::{World, RECURSION_DEPTH},
     Point,
 };
 
@@ -81,7 +81,7 @@ impl Camera {
         for y in 0..self.vsize {
             for x in 0..self.hsize {
                 let ray = self.ray_for_pixel(x, y).expect("pixel out of bounds");
-                let color = world.color_from(&ray);
+                let color = world.color_from(&ray, RECURSION_DEPTH);
                 image.write_pixel(x, y, color).expect("pixel out of bounds");
             }
         }
