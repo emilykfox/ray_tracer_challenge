@@ -79,6 +79,7 @@ pub struct HitInfo<'object> {
     pub normal: Vector,
     pub inside: bool,
     pub over_point: Point,
+    pub reflectv: Vector,
 }
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
@@ -94,6 +95,7 @@ impl<'object> HitInfo<'object> {
         let inside = Vector::dot(naive_normal, eyev) < 0.0;
         let normal = if inside { -naive_normal } else { naive_normal };
         let over_point = point + normal * SHADOW_EPSILON;
+        let reflectv = ray.direction.reflect(normal);
         HitInfo {
             t,
             object,
@@ -102,6 +104,7 @@ impl<'object> HitInfo<'object> {
             normal,
             inside,
             over_point,
+            reflectv,
         }
     }
 }
@@ -129,7 +132,7 @@ mod test {
     use crate::{
         canvas::Color,
         rays::Ray,
-        shapes::Sphere,
+        shapes::{Plane, Sphere},
         transformations::{translation, Builder},
         Point, Vector,
     };
@@ -311,5 +314,20 @@ mod test {
         let hit_info = HitInfo::prepare(&i, &r);
         assert!(hit_info.over_point.z < -SHADOW_EPSILON / 2.0);
         assert!(hit_info.point.z > hit_info.over_point.z);
+    }
+
+    #[test]
+    fn precompute_reflection_vector() {
+        let shape = Shape::new(Plane);
+        let r = Ray::new(
+            Point::new(0.0, 1.0, -1.0),
+            Vector::new(0.0, -(2_f64.sqrt()) / 2.0, 2_f64.sqrt() / 2.0),
+        );
+        let i = Intersection::new(2_f64.sqrt(), &shape);
+        let hit_info = HitInfo::prepare(&i, &r);
+        assert_eq!(
+            hit_info.reflectv,
+            Vector::new(0.0, 2_f64.sqrt() / 2.0, 2_f64.sqrt() / 2.0)
+        );
     }
 }
