@@ -33,7 +33,7 @@ impl World {
 
     pub fn shade_hit(&self, hit_info: &HitInfo) -> Color {
         let is_shadowed = self.is_shadowed(hit_info.over_point);
-        lighting(
+        let surface = lighting(
             &hit_info.object.material,
             hit_info.object,
             &self.light,
@@ -41,7 +41,11 @@ impl World {
             hit_info.eyev,
             hit_info.normal,
             is_shadowed,
-        )
+        );
+
+        let reflected = self.reflected_color(hit_info);
+
+        surface + reflected
     }
 
     pub fn color_from(&self, ray: &Ray) -> Color {
@@ -371,5 +375,23 @@ mod test {
         let hit_info = HitInfo::prepare(&i, &r);
         let color = w.reflected_color(&hit_info);
         assert_eq!(color, Color::new(0.19032, 0.2379, 0.14274));
+    }
+
+    #[test]
+    fn shade_hit_with_reflective_material() {
+        let mut w = default_world();
+        let mut shape = Shape::new(Plane);
+        shape.material.reflective = 0.5;
+        shape.set_transform(translation(0.0, -1.0, 0.0)).unwrap();
+        w.objects.push(shape);
+        let shape = &w.objects[2];
+        let r = Ray::new(
+            Point::new(0.0, 0.0, -3.0),
+            Vector::new(0.0, -(2_f64.sqrt()) / 2.0, 2_f64.sqrt() / 2.0),
+        );
+        let i = Intersection::new(2_f64.sqrt(), shape);
+        let hit_info = HitInfo::prepare(&i, &r);
+        let color = w.shade_hit(&hit_info);
+        assert_eq!(color, Color::new(0.87677, 0.92436, 0.82918));
     }
 }
