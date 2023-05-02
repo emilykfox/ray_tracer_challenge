@@ -1,9 +1,18 @@
 use crate::{rays::Ray, Point, Vector};
 
-use super::ShapeModel;
+use super::{Shape, ShapeModel};
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct Sphere;
+
+impl Sphere {
+    pub fn new_glass() -> Shape {
+        let mut shape = Shape::new(Sphere);
+        shape.material.transparaency = 1.0;
+        shape.material.refractive_index = 1.5;
+        shape
+    }
+}
 
 impl ShapeModel for Sphere {
     fn local_intersect(&self, local_ray: &'_ Ray) -> Vec<f64> {
@@ -31,7 +40,7 @@ impl ShapeModel for Sphere {
 
 #[cfg(test)]
 mod test {
-    use crate::{rays::Ray, Point, Vector};
+    use crate::{matrices::IDENTITY, rays::Ray, Point, Vector};
 
     use super::*;
 
@@ -131,5 +140,13 @@ mod test {
             3.0_f64.sqrt() / 3.0,
         ));
         assert_eq!(n, n.normalize());
+    }
+
+    #[test]
+    fn make_glass_sphere() {
+        let s = Sphere::new_glass();
+        assert_eq!(*s.get_transform(), IDENTITY);
+        assert_eq!(s.material.transparaency, 1.0);
+        assert_eq!(s.material.refractive_index, 1.5);
     }
 }

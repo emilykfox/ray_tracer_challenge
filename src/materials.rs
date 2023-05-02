@@ -9,6 +9,8 @@ pub struct Material {
     pub shininess: f64,
     pub pattern: Option<Pattern>,
     pub reflective: f64,
+    pub transparaency: f64,
+    pub refractive_index: f64,
 }
 
 impl Material {
@@ -27,6 +29,8 @@ impl Default for Material {
             shininess: 200.0,
             pattern: None,
             reflective: 0.0,
+            transparaency: 0.0,
+            refractive_index: 1.0,
         }
     }
 }
@@ -249,5 +253,12 @@ mod test {
     fn reflectivity_for_default_material() {
         let m = Material::default();
         assert_eq!(m.reflective, 0.0);
+    }
+
+    #[test]
+    fn transparency_and_refractive_index_for_default_material() {
+        let m = Material::default();
+        assert_eq!(m.transparaency, 0.0);
+        assert_eq!(m.refractive_index, 1.0);
     }
 }
