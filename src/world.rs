@@ -1,14 +1,13 @@
 use crate::{
     canvas::Color,
-    intersections::{Intersection, Intersections},
+    intersections::{HitInfo, Intersection, Intersections},
     lights::PointLight,
     materials::lighting,
     rays::Ray,
     shapes::Shape,
-    Point, Vector,
+    Point,
 };
 
-const SHADOW_EPSILON: f64 = 0.00001;
 pub const RECURSION_DEPTH: usize = 5;
 
 #[derive(Default, Debug, Clone, PartialEq)]
@@ -86,45 +85,6 @@ impl World {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct HitInfo<'object> {
-    pub t: f64,
-    pub object: &'object Shape,
-    pub point: Point,
-    pub eyev: Vector,
-    pub normal: Vector,
-    pub inside: bool,
-    pub over_point: Point,
-    pub reflectv: Vector,
-}
-
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
-pub struct NormalTransformationError;
-
-impl<'object> HitInfo<'object> {
-    pub fn prepare(intersection: &Intersection<'object>, ray: &Ray) -> Self {
-        let t = intersection.t;
-        let object = intersection.object;
-        let point = ray.position(t);
-        let eyev = -ray.direction;
-        let naive_normal = object.normal_at(point);
-        let inside = Vector::dot(naive_normal, eyev) < 0.0;
-        let normal = if inside { -naive_normal } else { naive_normal };
-        let over_point = point + normal * SHADOW_EPSILON;
-        let reflectv = ray.direction.reflect(normal);
-        HitInfo {
-            t,
-            object,
-            point,
-            eyev,
-            normal,
-            inside,
-            over_point,
-            reflectv,
-        }
-    }
-}
-
 #[cfg(test)]
 pub(crate) fn default_world() -> World {
     use crate::{shapes::Sphere, transformations::Builder};
@@ -189,40 +149,6 @@ mod test {
         assert_eq!(xs.vec[1].t, 4.5);
         assert_eq!(xs.vec[2].t, 5.5);
         assert_eq!(xs.vec[3].t, 6.0);
-    }
-
-    #[test]
-    fn create_hit_info() {
-        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let shape = Shape::new(Sphere);
-        let i = Intersection::new(4.0, &shape);
-        let hit_info = HitInfo::prepare(&i, &r);
-        assert_eq!(hit_info.t, i.t);
-        assert_eq!(hit_info.object, &shape);
-        assert_eq!(hit_info.point, Point::new(0.0, 0.0, -1.0));
-        assert_eq!(hit_info.eyev, Vector::new(0.0, 0.0, -1.0));
-        assert_eq!(hit_info.normal, Vector::new(0.0, 0.0, -1.0));
-    }
-
-    #[test]
-    fn hit_outside() {
-        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let shape = Shape::new(Sphere);
-        let i = Intersection::new(4.0, &shape);
-        let hit_info = HitInfo::prepare(&i, &r);
-        assert!(!hit_info.inside);
-    }
-
-    #[test]
-    fn hit_inside() {
-        let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
-        let shape = Shape::new(Sphere);
-        let i = Intersection::new(1.0, &shape);
-        let hit_info = HitInfo::prepare(&i, &r);
-        assert_eq!(hit_info.point, Point::new(0.0, 0.0, 1.0));
-        assert_eq!(hit_info.eyev, Vector::new(0.0, 0.0, -1.0));
-        assert!(hit_info.inside);
-        assert_eq!(hit_info.normal, Vector::new(0.0, 0.0, -1.0));
     }
 
     #[test]
@@ -319,32 +245,6 @@ mod test {
         let hit_info = HitInfo::prepare(&i, &r);
         let c = w.shade_hit(&hit_info, RECURSION_DEPTH);
         assert_eq!(c, Color::new(0.1, 0.1, 0.1));
-    }
-
-    #[test]
-    fn hit_should_offset_point() {
-        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let mut shape = Shape::new(Sphere);
-        shape.set_transform(translation(0.0, 0.0, 1.0)).unwrap();
-        let i = Intersection::new(5.0, &shape);
-        let hit_info = HitInfo::prepare(&i, &r);
-        assert!(hit_info.over_point.z < -SHADOW_EPSILON / 2.0);
-        assert!(hit_info.point.z > hit_info.over_point.z);
-    }
-
-    #[test]
-    fn precompute_reflection_vector() {
-        let shape = Shape::new(Plane);
-        let r = Ray::new(
-            Point::new(0.0, 1.0, -1.0),
-            Vector::new(0.0, -(2_f64.sqrt()) / 2.0, 2_f64.sqrt() / 2.0),
-        );
-        let i = Intersection::new(2_f64.sqrt(), &shape);
-        let hit_info = HitInfo::prepare(&i, &r);
-        assert_eq!(
-            hit_info.reflectv,
-            Vector::new(0.0, 2_f64.sqrt() / 2.0, 2_f64.sqrt() / 2.0)
-        );
     }
 
     #[test]

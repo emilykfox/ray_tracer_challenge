@@ -1,4 +1,6 @@
-use crate::{shapes::Shape, EQUALITY_EPSILON};
+use crate::{rays::Ray, shapes::Shape, Point, Vector, EQUALITY_EPSILON};
+
+const SHADOW_EPSILON: f64 = 0.00001;
 
 #[derive(Debug, Clone)]
 pub struct Intersection<'object> {
@@ -36,9 +38,53 @@ impl<'objects> Intersections<'objects> {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct HitInfo<'object> {
+    pub t: f64,
+    pub object: &'object Shape,
+    pub point: Point,
+    pub eyev: Vector,
+    pub normal: Vector,
+    pub inside: bool,
+    pub over_point: Point,
+    pub reflectv: Vector,
+}
+
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
+pub struct NormalTransformationError;
+
+impl<'object> HitInfo<'object> {
+    pub fn prepare(intersection: &Intersection<'object>, ray: &Ray) -> Self {
+        let t = intersection.t;
+        let object = intersection.object;
+        let point = ray.position(t);
+        let eyev = -ray.direction;
+        let naive_normal = object.normal_at(point);
+        let inside = Vector::dot(naive_normal, eyev) < 0.0;
+        let normal = if inside { -naive_normal } else { naive_normal };
+        let over_point = point + normal * SHADOW_EPSILON;
+        let reflectv = ray.direction.reflect(normal);
+        HitInfo {
+            t,
+            object,
+            point,
+            eyev,
+            normal,
+            inside,
+            over_point,
+            reflectv,
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use crate::shapes::Sphere;
+    use crate::{
+        rays::Ray,
+        shapes::{Plane, Sphere},
+        transformations::translation,
+        Point, Vector,
+    };
 
     use super::*;
 
@@ -101,5 +147,65 @@ mod test {
         let xs = Intersections::new(vec![i1, i2, i3, i4.clone()]);
         let i = xs.hit().unwrap();
         assert_eq!(*i, i4);
+    }
+
+    #[test]
+    fn create_hit_info() {
+        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let shape = Shape::new(Sphere);
+        let i = Intersection::new(4.0, &shape);
+        let hit_info = HitInfo::prepare(&i, &r);
+        assert_eq!(hit_info.t, i.t);
+        assert_eq!(hit_info.object, &shape);
+        assert_eq!(hit_info.point, Point::new(0.0, 0.0, -1.0));
+        assert_eq!(hit_info.eyev, Vector::new(0.0, 0.0, -1.0));
+        assert_eq!(hit_info.normal, Vector::new(0.0, 0.0, -1.0));
+    }
+
+    #[test]
+    fn hit_outside() {
+        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let shape = Shape::new(Sphere);
+        let i = Intersection::new(4.0, &shape);
+        let hit_info = HitInfo::prepare(&i, &r);
+        assert!(!hit_info.inside);
+    }
+
+    #[test]
+    fn hit_inside() {
+        let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
+        let shape = Shape::new(Sphere);
+        let i = Intersection::new(1.0, &shape);
+        let hit_info = HitInfo::prepare(&i, &r);
+        assert_eq!(hit_info.point, Point::new(0.0, 0.0, 1.0));
+        assert_eq!(hit_info.eyev, Vector::new(0.0, 0.0, -1.0));
+        assert!(hit_info.inside);
+        assert_eq!(hit_info.normal, Vector::new(0.0, 0.0, -1.0));
+    }
+
+    #[test]
+    fn hit_should_offset_point() {
+        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let mut shape = Shape::new(Sphere);
+        shape.set_transform(translation(0.0, 0.0, 1.0)).unwrap();
+        let i = Intersection::new(5.0, &shape);
+        let hit_info = HitInfo::prepare(&i, &r);
+        assert!(hit_info.over_point.z < -SHADOW_EPSILON / 2.0);
+        assert!(hit_info.point.z > hit_info.over_point.z);
+    }
+
+    #[test]
+    fn precompute_reflection_vector() {
+        let shape = Shape::new(Plane);
+        let r = Ray::new(
+            Point::new(0.0, 1.0, -1.0),
+            Vector::new(0.0, -(2_f64.sqrt()) / 2.0, 2_f64.sqrt() / 2.0),
+        );
+        let i = Intersection::new(2_f64.sqrt(), &shape);
+        let hit_info = HitInfo::prepare(&i, &r);
+        assert_eq!(
+            hit_info.reflectv,
+            Vector::new(0.0, 2_f64.sqrt() / 2.0, 2_f64.sqrt() / 2.0)
+        );
     }
 }
