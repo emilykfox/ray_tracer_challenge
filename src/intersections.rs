@@ -46,6 +46,16 @@ impl<'objects> std::ops::Deref for Intersections<'objects> {
     }
 }
 
+impl<'objects> std::iter::IntoIterator for Intersections<'objects> {
+    type Item = Intersection<'objects>;
+
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.vec.into_iter()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct HitInfo<'object> {
     pub t: f64,
