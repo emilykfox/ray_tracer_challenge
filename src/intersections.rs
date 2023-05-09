@@ -22,19 +22,37 @@ impl<'object> PartialEq for Intersection<'object> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Intersections<'objects> {
-    pub vec: Vec<Intersection<'objects>>,
+    vec: Vec<Intersection<'objects>>,
 }
 
 impl<'objects> Intersections<'objects> {
-    pub fn new(vec: Vec<Intersection<'objects>>) -> Self {
+    pub fn new(mut vec: Vec<Intersection<'objects>>) -> Self {
+        vec.sort_by(|x, y| x.t.total_cmp(&y.t));
         Intersections { vec }
     }
 
     pub fn hit(&self) -> Option<&Intersection<'objects>> {
-        self.vec
-            .iter()
-            .filter(|intersection| intersection.t >= 0.0)
-            .min_by(|x, y| x.t.total_cmp(&y.t))
+        match self.vec.binary_search_by(|probe| probe.t.total_cmp(&0.0)) {
+            Ok(index) | Err(index) => self.vec.get(index),
+        }
+    }
+}
+
+impl<'objects> std::ops::Deref for Intersections<'objects> {
+    type Target = Vec<Intersection<'objects>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.vec
+    }
+}
+
+impl<'objects> std::iter::IntoIterator for Intersections<'objects> {
+    type Item = Intersection<'objects>;
+
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.vec.into_iter()
     }
 }
 
@@ -82,7 +100,7 @@ mod test {
     use crate::{
         rays::Ray,
         shapes::{Plane, Sphere},
-        transformations::translation,
+        transformations::{scaling, translation},
         Point, Vector,
     };
 
@@ -207,5 +225,43 @@ mod test {
             hit_info.reflectv,
             Vector::new(0.0, 2_f64.sqrt() / 2.0, 2_f64.sqrt() / 2.0)
         );
+    }
+
+    #[test]
+    fn various_n1_and_n2() {
+        let mut a = Sphere::new_glass();
+        a.set_transform(scaling(2.0, 2.0, 2.0));
+        a.material.refractive_index = 1.5;
+        let mut b = Sphere::new_glass();
+        b.set_transform(translation(0.0, 0.0, -0.25));
+        b.material.refractive_index = 2.0;
+        let mut c = Sphere::new_glass();
+        c.set_transform(translation(0.0, 0.0, 0.25));
+        c.material.refractive_index = 2.5;
+
+        let r = Ray::new(Point::new(0.0, 0.0, -4.0), Vector::new(0.0, 0.0, 1.0));
+        let xs = Intersections::new(vec![
+            Intersection::new(2.0, &a),
+            Intersection::new(2.75, &b),
+            Intersection::new(3.25, &c),
+            Intersection::new(4.75, &b),
+            Intersection::new(5.25, &c),
+            Intersection::new(6.0, &a),
+        ]);
+
+        let examples = vec![
+            (1.0, 1.5),
+            (1.5, 2.0),
+            (2.0, 2.5),
+            (2.5, 2.5),
+            (2.5, 1.5),
+            (1.5, 1.0),
+        ];
+        for (index, pair) in examples.iter().enumerate() {
+            let hit_info = HitInfo::prepare(&xs.vec[index], &r);
+            todo!();
+            //TODO: Finish test assert_eq!(hit_info.n1, pair.0);
+            //assert_eq!(hit_info.n2, pair.1);
+        }
     }
 }
