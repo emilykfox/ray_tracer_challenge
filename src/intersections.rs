@@ -22,7 +22,7 @@ impl<'object> PartialEq for Intersection<'object> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Intersections<'objects> {
-    pub vec: Vec<Intersection<'objects>>,
+    vec: Vec<Intersection<'objects>>,
 }
 
 impl<'objects> Intersections<'objects> {

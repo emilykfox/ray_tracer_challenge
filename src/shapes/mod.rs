@@ -206,10 +206,10 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let s = Shape::new(TestModel);
         let xs = s.intersect(&r);
-        assert_eq!(xs.vec.len(), 3);
-        assert!(std::ptr::eq(xs.vec[0].object, &s));
-        assert!(std::ptr::eq(xs.vec[1].object, &s));
-        assert!(std::ptr::eq(xs.vec[2].object, &s));
+        assert_eq!(xs.len(), 3);
+        assert!(std::ptr::eq(xs[0].object, &s));
+        assert!(std::ptr::eq(xs[1].object, &s));
+        assert!(std::ptr::eq(xs[2].object, &s));
     }
 
     #[test]
@@ -218,10 +218,10 @@ mod test {
         let mut s = Shape::new(TestModel);
         s.set_transform(scaling(2.0, 2.0, 2.0)).unwrap();
         let xs = s.intersect(&r);
-        assert_eq!(xs.vec.len(), 3);
-        assert_eq!(xs.vec[0].t, -2.5);
-        assert_eq!(xs.vec[1].t, 0.0);
-        assert_eq!(xs.vec[2].t, 0.0);
+        assert_eq!(xs.len(), 3);
+        assert_eq!(xs[0].t, -2.5);
+        assert_eq!(xs[1].t, 0.0);
+        assert_eq!(xs[2].t, 0.0);
     }
 
     #[test]
@@ -230,10 +230,10 @@ mod test {
         let mut s = Shape::new(TestModel);
         s.set_transform(translation(5.0, 0.0, 0.0)).unwrap();
         let xs = s.intersect(&r);
-        assert_eq!(xs.vec.len(), 3);
-        assert_eq!(xs.vec[0].t, -5.0);
-        assert_eq!(xs.vec[1].t, -5.0);
-        assert_eq!(xs.vec[2].t, 0.0);
+        assert_eq!(xs.len(), 3);
+        assert_eq!(xs[0].t, -5.0);
+        assert_eq!(xs[1].t, -5.0);
+        assert_eq!(xs[2].t, 0.0);
     }
 
     #[test]

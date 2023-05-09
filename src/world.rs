@@ -25,7 +25,7 @@ impl World {
         let vec = self
             .objects
             .iter()
-            .flat_map(|object| object.intersect(ray).vec.into_iter())
+            .flat_map(|object| object.intersect(ray).into_iter())
             .collect::<Vec<Intersection>>();
         Intersections::new(vec)
     }
@@ -143,11 +143,11 @@ mod test {
         let w = default_world();
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let xs = w.intersect(&r);
-        assert_eq!(xs.vec.len(), 4);
-        assert_eq!(xs.vec[0].t, 4.0);
-        assert_eq!(xs.vec[1].t, 4.5);
-        assert_eq!(xs.vec[2].t, 5.5);
-        assert_eq!(xs.vec[3].t, 6.0);
+        assert_eq!(xs.len(), 4);
+        assert_eq!(xs[0].t, 4.0);
+        assert_eq!(xs[1].t, 4.5);
+        assert_eq!(xs[2].t, 5.5);
+        assert_eq!(xs[3].t, 6.0);
     }
 
     #[test]
