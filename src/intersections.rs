@@ -32,10 +32,9 @@ impl<'objects> Intersections<'objects> {
     }
 
     pub fn hit(&self) -> Option<&Intersection<'objects>> {
-        self.vec
-            .iter()
-            .filter(|intersection| intersection.t >= 0.0)
-            .min_by(|x, y| x.t.total_cmp(&y.t))
+        match self.vec.binary_search_by(|probe| probe.t.total_cmp(&0.0)) {
+            Ok(index) | Err(index) => self.vec.get(index),
+        }
     }
 }
 
