@@ -26,7 +26,8 @@ pub struct Intersections<'objects> {
 }
 
 impl<'objects> Intersections<'objects> {
-    pub fn new(vec: Vec<Intersection<'objects>>) -> Self {
+    pub fn new(mut vec: Vec<Intersection<'objects>>) -> Self {
+        vec.sort_by(|x, y| x.t.total_cmp(&y.t));
         Intersections { vec }
     }
 

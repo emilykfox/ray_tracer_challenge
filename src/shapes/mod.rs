@@ -219,9 +219,9 @@ mod test {
         s.set_transform(scaling(2.0, 2.0, 2.0)).unwrap();
         let xs = s.intersect(&r);
         assert_eq!(xs.vec.len(), 3);
-        assert_eq!(xs.vec[0].t, 0.0);
+        assert_eq!(xs.vec[0].t, -2.5);
         assert_eq!(xs.vec[1].t, 0.0);
-        assert_eq!(xs.vec[2].t, -2.5);
+        assert_eq!(xs.vec[2].t, 0.0);
     }
 
     #[test]
@@ -232,8 +232,8 @@ mod test {
         let xs = s.intersect(&r);
         assert_eq!(xs.vec.len(), 3);
         assert_eq!(xs.vec[0].t, -5.0);
-        assert_eq!(xs.vec[1].t, 0.0);
-        assert_eq!(xs.vec[2].t, -5.0);
+        assert_eq!(xs.vec[1].t, -5.0);
+        assert_eq!(xs.vec[2].t, 0.0);
     }
 
     #[test]

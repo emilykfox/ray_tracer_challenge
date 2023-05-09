@@ -22,12 +22,11 @@ impl World {
     }
 
     pub fn intersect(&self, ray: &Ray) -> Intersections {
-        let mut vec = self
+        let vec = self
             .objects
             .iter()
             .flat_map(|object| object.intersect(ray).vec.into_iter())
             .collect::<Vec<Intersection>>();
-        vec.sort_by(|x, y| x.t.total_cmp(&y.t));
         Intersections::new(vec)
     }
 
