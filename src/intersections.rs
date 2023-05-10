@@ -31,9 +31,14 @@ impl<'objects> Intersections<'objects> {
         Intersections { vec }
     }
 
-    pub fn hit(&self) -> Option<&Intersection<'objects>> {
-        match self.vec.binary_search_by(|probe| probe.t.total_cmp(&0.0)) {
-            Ok(index) | Err(index) => self.vec.get(index),
+    pub fn hit(&self) -> Option<usize> {
+        if self.vec.is_empty() {
+            None
+        } else {
+            match self.vec.binary_search_by(|probe| probe.t.total_cmp(&0.0)) {
+                Ok(index) | Err(index) if index < self.vec.len() => Some(index),
+                _ => None,
+            }
         }
     }
 }
@@ -66,13 +71,20 @@ pub struct HitInfo<'object> {
     pub inside: bool,
     pub over_point: Point,
     pub reflectv: Vector,
+    pub n1: f64,
+    pub n2: f64,
 }
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub struct NormalTransformationError;
 
 impl<'object> HitInfo<'object> {
-    pub fn prepare(intersection: &Intersection<'object>, ray: &Ray) -> Self {
+    pub fn prepare(
+        intersections: &Intersections<'object>,
+        ray: &Ray,
+        hit_index: usize,
+    ) -> Option<Self> {
+        let intersection = intersections.get(hit_index)?;
         let t = intersection.t;
         let object = intersection.object;
         let point = ray.position(t);
@@ -82,7 +94,7 @@ impl<'object> HitInfo<'object> {
         let normal = if inside { -naive_normal } else { naive_normal };
         let over_point = point + normal * SHADOW_EPSILON;
         let reflectv = ray.direction.reflect(normal);
-        HitInfo {
+        Some(HitInfo {
             t,
             object,
             point,
@@ -91,7 +103,9 @@ impl<'object> HitInfo<'object> {
             inside,
             over_point,
             reflectv,
-        }
+            n1: 1.0,
+            n2: 1.0,
+        })
     }
 }
 
@@ -120,9 +134,9 @@ mod test {
         let i1 = Intersection::new(1.0, &s);
         let i2 = Intersection::new(2.0, &s);
         let xs = Intersections::new(vec![i1, i2]);
-        assert_eq!(xs.vec.len(), 2);
-        assert_eq!(xs.vec[0].t, 1.0);
-        assert_eq!(xs.vec[1].t, 2.0);
+        assert_eq!(xs.len(), 2);
+        assert_eq!(xs[0].t, 1.0);
+        assert_eq!(xs[1].t, 2.0);
     }
 
     #[test]
@@ -132,7 +146,7 @@ mod test {
         let i2 = Intersection::new(2.0, &s);
         let xs = Intersections::new(vec![i2, i1.clone()]);
         let i = xs.hit().unwrap();
-        assert_eq!(*i, i1);
+        assert_eq!(xs[i], i1);
     }
 
     #[test]
@@ -142,7 +156,7 @@ mod test {
         let i2 = Intersection::new(1.0, &s);
         let xs = Intersections::new(vec![i2.clone(), i1]);
         let i = xs.hit().unwrap();
-        assert_eq!(*i, i2);
+        assert_eq!(xs[i], i2);
     }
 
     #[test]
@@ -164,7 +178,7 @@ mod test {
         let i4 = Intersection::new(2.0, &s);
         let xs = Intersections::new(vec![i1, i2, i3, i4.clone()]);
         let i = xs.hit().unwrap();
-        assert_eq!(*i, i4);
+        assert_eq!(xs[i], i4);
     }
 
     #[test]
@@ -172,7 +186,8 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let shape = Shape::new(Sphere);
         let i = Intersection::new(4.0, &shape);
-        let hit_info = HitInfo::prepare(&i, &r);
+        let xs = Intersections::new(vec![i.clone()]);
+        let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
         assert_eq!(hit_info.t, i.t);
         assert_eq!(hit_info.object, &shape);
         assert_eq!(hit_info.point, Point::new(0.0, 0.0, -1.0));
@@ -185,7 +200,8 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let shape = Shape::new(Sphere);
         let i = Intersection::new(4.0, &shape);
-        let hit_info = HitInfo::prepare(&i, &r);
+        let xs = Intersections::new(vec![i.clone()]);
+        let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
         assert!(!hit_info.inside);
     }
 
@@ -194,7 +210,8 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
         let shape = Shape::new(Sphere);
         let i = Intersection::new(1.0, &shape);
-        let hit_info = HitInfo::prepare(&i, &r);
+        let xs = Intersections::new(vec![i.clone()]);
+        let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
         assert_eq!(hit_info.point, Point::new(0.0, 0.0, 1.0));
         assert_eq!(hit_info.eyev, Vector::new(0.0, 0.0, -1.0));
         assert!(hit_info.inside);
@@ -207,7 +224,8 @@ mod test {
         let mut shape = Shape::new(Sphere);
         shape.set_transform(translation(0.0, 0.0, 1.0)).unwrap();
         let i = Intersection::new(5.0, &shape);
-        let hit_info = HitInfo::prepare(&i, &r);
+        let xs = Intersections::new(vec![i.clone()]);
+        let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
         assert!(hit_info.over_point.z < -SHADOW_EPSILON / 2.0);
         assert!(hit_info.point.z > hit_info.over_point.z);
     }
@@ -220,7 +238,8 @@ mod test {
             Vector::new(0.0, -(2_f64.sqrt()) / 2.0, 2_f64.sqrt() / 2.0),
         );
         let i = Intersection::new(2_f64.sqrt(), &shape);
-        let hit_info = HitInfo::prepare(&i, &r);
+        let xs = Intersections::new(vec![i.clone()]);
+        let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
         assert_eq!(
             hit_info.reflectv,
             Vector::new(0.0, 2_f64.sqrt() / 2.0, 2_f64.sqrt() / 2.0)
@@ -230,13 +249,13 @@ mod test {
     #[test]
     fn various_n1_and_n2() {
         let mut a = Sphere::new_glass();
-        a.set_transform(scaling(2.0, 2.0, 2.0));
+        a.set_transform(scaling(2.0, 2.0, 2.0)).unwrap();
         a.material.refractive_index = 1.5;
         let mut b = Sphere::new_glass();
-        b.set_transform(translation(0.0, 0.0, -0.25));
+        b.set_transform(translation(0.0, 0.0, -0.25)).unwrap();
         b.material.refractive_index = 2.0;
         let mut c = Sphere::new_glass();
-        c.set_transform(translation(0.0, 0.0, 0.25));
+        c.set_transform(translation(0.0, 0.0, 0.25)).unwrap();
         c.material.refractive_index = 2.5;
 
         let r = Ray::new(Point::new(0.0, 0.0, -4.0), Vector::new(0.0, 0.0, 1.0));
@@ -258,10 +277,10 @@ mod test {
             (1.5, 1.0),
         ];
         for (index, pair) in examples.iter().enumerate() {
-            let hit_info = HitInfo::prepare(&xs.vec[index], &r);
+            let hit_info = HitInfo::prepare(&xs, &r, index).unwrap();
             todo!();
-            //TODO: Finish test assert_eq!(hit_info.n1, pair.0);
-            //assert_eq!(hit_info.n2, pair.1);
+            assert_eq!(hit_info.n1, pair.0);
+            assert_eq!(hit_info.n2, pair.1);
         }
     }
 }

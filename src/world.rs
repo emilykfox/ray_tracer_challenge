@@ -49,11 +49,10 @@ impl World {
 
     pub fn color_from(&self, ray: &Ray, remaining: usize) -> Color {
         let intersections = self.intersect(ray);
-        let hit = intersections.hit();
-        let Some(hit) = hit else {
+        let Some(hit_index) = intersections.hit() else {
             return Color::default();
         };
-        let hit_info = HitInfo::prepare(hit, ray);
+        let hit_info = HitInfo::prepare(&intersections, ray, hit_index).expect("invalid hit index");
         self.shade_hit(&hit_info, remaining)
     }
 
@@ -64,9 +63,8 @@ impl World {
 
         let ray = Ray::new(point, direction);
         let intersections = self.intersect(&ray);
-        let hit = intersections.hit();
-        if let Some(hit) = hit {
-            hit.t < distance
+        if let Some(hit_index) = intersections.hit() {
+            intersections[hit_index].t < distance
         } else {
             false
         }
@@ -156,7 +154,8 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let shape = &w.objects[0];
         let i = Intersection::new(4.0, shape);
-        let hit_info = HitInfo::prepare(&i, &r);
+        let xs = Intersections::new(vec![i.clone()]);
+        let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
         let c = w.shade_hit(&hit_info, RECURSION_DEPTH);
         assert_eq!(c, Color::new(0.38066, 0.47583, 0.2855));
     }
@@ -168,7 +167,8 @@ mod test {
         let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
         let shape = &w.objects[1];
         let i = Intersection::new(0.5, shape);
-        let hit_info = HitInfo::prepare(&i, &r);
+        let xs = Intersections::new(vec![i.clone()]);
+        let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
         let c = w.shade_hit(&hit_info, RECURSION_DEPTH);
         assert_eq!(c, Color::new(0.90498, 0.90498, 0.90498));
     }
@@ -241,7 +241,8 @@ mod test {
         w.objects.push(s2);
         let r = Ray::new(Point::new(0.0, 0.0, 5.0), Vector::new(0.0, 0.0, 1.0));
         let i = Intersection::new(4.0, &w.objects[1]);
-        let hit_info = HitInfo::prepare(&i, &r);
+        let xs = Intersections::new(vec![i.clone()]);
+        let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
         let c = w.shade_hit(&hit_info, RECURSION_DEPTH);
         assert_eq!(c, Color::new(0.1, 0.1, 0.1));
     }
@@ -254,7 +255,8 @@ mod test {
         shape.material.ambient = 1.0;
         let shape = &w.objects[1];
         let i = Intersection::new(1.0, shape);
-        let hit_info = HitInfo::prepare(&i, &r);
+        let xs = Intersections::new(vec![i.clone()]);
+        let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
         let color = w.reflected_color(&hit_info, RECURSION_DEPTH);
         assert_eq!(color, Color::new(0.0, 0.0, 0.0));
     }
@@ -272,7 +274,8 @@ mod test {
             Vector::new(0.0, -(2_f64.sqrt()) / 2.0, 2_f64.sqrt() / 2.0),
         );
         let i = Intersection::new(2_f64.sqrt(), shape);
-        let hit_info = HitInfo::prepare(&i, &r);
+        let xs = Intersections::new(vec![i.clone()]);
+        let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
         let color = w.reflected_color(&hit_info, RECURSION_DEPTH);
         assert_eq!(color, Color::new(0.19032, 0.2379, 0.14274));
     }
@@ -290,7 +293,8 @@ mod test {
             Vector::new(0.0, -(2_f64.sqrt()) / 2.0, 2_f64.sqrt() / 2.0),
         );
         let i = Intersection::new(2_f64.sqrt(), shape);
-        let hit_info = HitInfo::prepare(&i, &r);
+        let xs = Intersections::new(vec![i.clone()]);
+        let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
         let color = w.shade_hit(&hit_info, RECURSION_DEPTH);
         assert_eq!(color, Color::new(0.87677, 0.92436, 0.82918));
     }
@@ -324,7 +328,8 @@ mod test {
             Vector::new(0.0, -(2_f64.sqrt()) / 2.0, 2_f64.sqrt() / 2.0),
         );
         let i = Intersection::new(2_f64.sqrt(), shape);
-        let hit_info = HitInfo::prepare(&i, &r);
+        let xs = Intersections::new(vec![i.clone()]);
+        let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
         let color = w.reflected_color(&hit_info, 0);
         assert_eq!(color, Color::new(0.0, 0.0, 0.0));
     }
