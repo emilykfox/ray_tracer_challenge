@@ -1,3 +1,5 @@
+use std::collections::{BTreeMap, BTreeSet, BinaryHeap};
+
 use crate::{rays::Ray, shapes::Shape, Point, Vector, EQUALITY_EPSILON};
 
 const SHADOW_EPSILON: f64 = 0.00001;
@@ -94,6 +96,29 @@ impl<'object> HitInfo<'object> {
         let normal = if inside { -naive_normal } else { naive_normal };
         let over_point = point + normal * SHADOW_EPSILON;
         let reflectv = ray.direction.reflect(normal);
+
+        let mut n1 = 1.0;
+        let mut n2 = 1.0;
+        // Assumes intersections is sorted by t value of the intersection
+        let mut containers = BTreeMap::<usize, &Shape>::new();
+        for (index, intersection) in intersections.iter().enumerate() {
+            if index == hit_index {
+                if let Some((_, object)) = containers.last_key_value() {
+                    n1 = object.material.refractive_index;
+                }
+            }
+
+            // TODO: test _object references_ for equality
+            if containers.remove(&index).is_none() {
+                containers.insert(index, intersection.object);
+            }
+
+            if index == hit_index {
+                if let Some((_, object)) = containers.last_key_value() {
+                    n2 = object.material.refractive_index;
+                }
+            }
+        }
         Some(HitInfo {
             t,
             object,
@@ -103,8 +128,8 @@ impl<'object> HitInfo<'object> {
             inside,
             over_point,
             reflectv,
-            n1: 1.0,
-            n2: 1.0,
+            n1,
+            n2,
         })
     }
 }
@@ -278,7 +303,6 @@ mod test {
         ];
         for (index, pair) in examples.iter().enumerate() {
             let hit_info = HitInfo::prepare(&xs, &r, index).unwrap();
-            todo!();
             assert_eq!(hit_info.n1, pair.0);
             assert_eq!(hit_info.n2, pair.1);
         }
