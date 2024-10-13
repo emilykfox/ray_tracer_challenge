@@ -80,6 +80,14 @@ impl World {
 
         color * hit_info.object.material.reflective
     }
+
+    pub fn refracted_color(&self, hit_info: &HitInfo, remaining: usize) -> Color {
+        if hit_info.object.material.transparaency == 0.0 {
+            Color::new(0.0, 0.0, 0.0)
+        } else {
+            todo!()
+        }
+    }
 }
 
 #[cfg(test)]
@@ -331,6 +339,20 @@ mod test {
         let xs = Intersections::new(vec![i.clone()]);
         let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
         let color = w.reflected_color(&hit_info, 0);
+        assert_eq!(color, Color::new(0.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn refracted_color_opaque_material() {
+        let w = default_world();
+        let shape = &w.objects[0];
+        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let xs = Intersections::new(vec![
+            Intersection::new(4.0, shape),
+            Intersection::new(6.0, shape),
+        ]);
+        let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
+        let color = w.refracted_color(&hit_info, RECURSION_DEPTH);
         assert_eq!(color, Color::new(0.0, 0.0, 0.0));
     }
 }
