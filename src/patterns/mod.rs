@@ -102,6 +102,15 @@ impl PartialEq for Pattern {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct TestPattern;
+
+impl PatternModel for TestPattern {
+    fn at(&self, point: Point) -> Color {
+        Color::new(point.x, point.y, point.z)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::{
@@ -111,15 +120,6 @@ mod test {
     };
 
     use super::*;
-
-    #[derive(Debug, Clone, PartialEq)]
-    struct TestPattern;
-
-    impl PatternModel for TestPattern {
-        fn at(&self, point: Point) -> Color {
-            Color::new(point.x, point.y, point.z)
-        }
-    }
 
     #[test]
     fn default_pattern() {
