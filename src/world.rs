@@ -5,7 +5,7 @@ use crate::{
     materials::lighting,
     rays::Ray,
     shapes::Shape,
-    Point,
+    Point, Vector,
 };
 
 pub const RECURSION_DEPTH: usize = 5;
@@ -83,10 +83,18 @@ impl World {
 
     pub fn refracted_color(&self, hit_info: &HitInfo, remaining: usize) -> Color {
         if remaining == 0 || hit_info.object.material.transparaency == 0.0 {
-            Color::new(0.0, 0.0, 0.0)
-        } else {
-            todo!()
+            return Color::new(0.0, 0.0, 0.0);
         }
+
+        let n_ratio = hit_info.n1 / hit_info.n2;
+        let cos_i = Vector::dot(hit_info.eyev, hit_info.normal);
+        let sin2_t = n_ratio * n_ratio * (1.0 - cos_i * cos_i);
+
+        if sin2_t > 1.0 {
+            return Color::new(0.0, 0.0, 0.0);
+        }
+
+        todo!()
     }
 }
 
@@ -370,6 +378,26 @@ mod test {
         ]);
         let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
         let color = w.refracted_color(&hit_info, 0);
+        assert_eq!(color, Color::new(0.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn refracted_color_total_internal_reflection() {
+        let mut w = default_world();
+        let shape = &mut w.objects[0];
+        shape.material.transparaency = 1.0;
+        shape.material.refractive_index = 1.5;
+        let shape = &w.objects[0];
+        let r = Ray::new(
+            Point::new(0.0, 0.0, 2_f64.sqrt() / 2.0),
+            Vector::new(0.0, 1.0, 0.0),
+        );
+        let xs = Intersections::new(vec![
+            Intersection::new(-(2_f64.sqrt()) / 2.0, shape),
+            Intersection::new(2_f64.sqrt() / 2.0, shape),
+        ]);
+        let hit_info = HitInfo::prepare(&xs, &r, 1).unwrap();
+        let color = w.refracted_color(&hit_info, 5);
         assert_eq!(color, Color::new(0.0, 0.0, 0.0));
     }
 }
