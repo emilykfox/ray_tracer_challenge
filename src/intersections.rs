@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 use crate::{rays::Ray, shapes::Shape, Point, Vector, EQUALITY_EPSILON};
 
@@ -100,16 +100,20 @@ impl<'object> HitInfo<'object> {
         let mut n1 = 1.0;
         let mut n2 = 1.0;
         // Assumes intersections is sorted by t value of the intersection
+        let mut first_index_by_object = HashMap::<*const Shape, usize>::new();
         let mut containers = BTreeMap::<usize, &Shape>::new();
         for (index, intersection) in intersections.iter().enumerate() {
+            let object = intersections[index].object;
             if index == hit_index {
                 if let Some((_, object)) = containers.last_key_value() {
                     n1 = object.material.refractive_index;
                 }
             }
 
-            // TODO: test _object references_ for equality
-            if containers.remove(&index).is_none() {
+            if let Some(first_index) = first_index_by_object.remove(&(object as *const Shape)) {
+                containers.remove(&first_index);
+            } else {
+                first_index_by_object.insert(object as *const Shape, index);
                 containers.insert(index, intersection.object);
             }
 
@@ -117,6 +121,7 @@ impl<'object> HitInfo<'object> {
                 if let Some((_, object)) = containers.last_key_value() {
                     n2 = object.material.refractive_index;
                 }
+                break;
             }
         }
         Some(HitInfo {
@@ -293,7 +298,7 @@ mod test {
             Intersection::new(6.0, &a),
         ]);
 
-        let examples = vec![
+        let examples = [
             (1.0, 1.5),
             (1.5, 2.0),
             (2.0, 2.5),
@@ -303,8 +308,8 @@ mod test {
         ];
         for (index, pair) in examples.iter().enumerate() {
             let hit_info = HitInfo::prepare(&xs, &r, index).unwrap();
-            assert_eq!(hit_info.n1, pair.0);
-            assert_eq!(hit_info.n2, pair.1);
+            assert_eq!((index, hit_info.n1), (index, pair.0));
+            assert_eq!((index, hit_info.n2), (index, pair.1));
         }
     }
 }
