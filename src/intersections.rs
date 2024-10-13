@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet, BinaryHeap};
+use std::collections::BTreeMap;
 
 use crate::{rays::Ray, shapes::Shape, Point, Vector, EQUALITY_EPSILON};
 
