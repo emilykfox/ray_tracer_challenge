@@ -94,7 +94,10 @@ impl World {
             return Color::new(0.0, 0.0, 0.0);
         }
 
-        todo!()
+        let cos_t = (1.0 - sin2_t).sqrt();
+        let direction = hit_info.normal * (n_ratio * cos_i - cos_t) - hit_info.eyev * n_ratio;
+        let refract_ray = Ray::new(hit_info.under_point, direction);
+        self.color_from(&refract_ray, remaining - 1) * hit_info.object.material.transparaency
     }
 }
 
@@ -120,6 +123,7 @@ pub(crate) fn default_world() -> World {
 mod test {
     use crate::{
         canvas::Color,
+        patterns::{Pattern, TestPattern},
         rays::Ray,
         shapes::{Plane, Sphere},
         transformations::{translation, Builder},
@@ -399,5 +403,28 @@ mod test {
         let hit_info = HitInfo::prepare(&xs, &r, 1).unwrap();
         let color = w.refracted_color(&hit_info, 5);
         assert_eq!(color, Color::new(0.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn refracted_color_from_refracted_ray() {
+        let mut w = default_world();
+        let a = &mut w.objects[0];
+        a.material.ambient = 1.0;
+        a.material.pattern = Some(Pattern::new(TestPattern));
+        let b = &mut w.objects[1];
+        b.material.transparaency = 1.0;
+        b.material.refractive_index = 1.5;
+        let a = &w.objects[0];
+        let b = &w.objects[1];
+        let r = Ray::new(Point::new(0.0, 0.0, 0.1), Vector::new(0.0, 1.0, 0.0));
+        let xs = Intersections::new(vec![
+            Intersection::new(-0.9899, a),
+            Intersection::new(-0.4899, b),
+            Intersection::new(0.4899, b),
+            Intersection::new(0.9899, a),
+        ]);
+        let hit_info = HitInfo::prepare(&xs, &r, 2).unwrap();
+        let color = w.refracted_color(&hit_info, 5);
+        assert_eq!(color, Color::new(0.0, 0.99888, 0.04725));
     }
 }
