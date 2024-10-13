@@ -82,7 +82,7 @@ impl World {
     }
 
     pub fn refracted_color(&self, hit_info: &HitInfo, remaining: usize) -> Color {
-        if hit_info.object.material.transparaency == 0.0 {
+        if remaining == 0 || hit_info.object.material.transparaency == 0.0 {
             Color::new(0.0, 0.0, 0.0)
         } else {
             todo!()
@@ -353,6 +353,23 @@ mod test {
         ]);
         let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
         let color = w.refracted_color(&hit_info, RECURSION_DEPTH);
+        assert_eq!(color, Color::new(0.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn refracted_color_at_max_recursive_depth() {
+        let mut w = default_world();
+        let shape = &mut w.objects[0];
+        shape.material.transparaency = 1.0;
+        shape.material.refractive_index = 1.5;
+        let shape = &w.objects[0];
+        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let xs = Intersections::new(vec![
+            Intersection::new(4.0, shape),
+            Intersection::new(6.0, shape),
+        ]);
+        let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
+        let color = w.refracted_color(&hit_info, 0);
         assert_eq!(color, Color::new(0.0, 0.0, 0.0));
     }
 }
