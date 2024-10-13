@@ -75,6 +75,7 @@ pub struct HitInfo<'object> {
     pub reflectv: Vector,
     pub n1: f64,
     pub n2: f64,
+    pub under_point: Point,
 }
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
@@ -124,6 +125,8 @@ impl<'object> HitInfo<'object> {
                 break;
             }
         }
+        let under_point = point - normal * SHADOW_EPSILON;
+
         Some(HitInfo {
             t,
             object,
@@ -135,6 +138,7 @@ impl<'object> HitInfo<'object> {
             reflectv,
             n1,
             n2,
+            under_point,
         })
     }
 }
@@ -311,5 +315,17 @@ mod test {
             assert_eq!((index, hit_info.n1), (index, pair.0));
             assert_eq!((index, hit_info.n2), (index, pair.1));
         }
+    }
+
+    #[test]
+    fn under_point() {
+        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let mut shape = Sphere::new_glass();
+        shape.set_transform(translation(0.0, 0.0, 1.0)).unwrap();
+        let xs = Intersections::new(vec![Intersection::new(5.0, &shape)]);
+
+        let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
+        assert!(hit_info.under_point.z > SHADOW_EPSILON / 2.0);
+        assert!(hit_info.point.z < hit_info.under_point.z);
     }
 }
