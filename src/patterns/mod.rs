@@ -102,9 +102,11 @@ impl PartialEq for Pattern {
     }
 }
 
+#[cfg(test)]
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct TestPattern;
 
+#[cfg(test)]
 impl PatternModel for TestPattern {
     fn at(&self, point: Point) -> Color {
         Color::new(point.x, point.y, point.z)
