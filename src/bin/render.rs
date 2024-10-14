@@ -107,15 +107,17 @@ fn main() -> std::io::Result<()> {
     left.set_transform(
         Builder::new()
             .scaling(0.33, 0.33, 0.33)
-            .translation(-1.5, 0.33, -0.75)
+            .translation(-0.75, 0.33, 1.0)
             .transform(),
     )
     .unwrap();
     left.material = Material::new();
-    left.material.color = Color::new(1.0, 0.8, 0.1);
-    left.material.diffuse = 0.7;
+    left.material.color = Color::new(0.25, 0.2, 0.025);
+    left.material.diffuse = 0.1;
     left.material.specular = 0.3;
-    left.material.reflective = 0.2;
+    left.material.reflective = 0.1;
+    left.material.transparaency = 0.9;
+    left.material.refractive_index = 1.05;
 
     let mut world = World::new();
     world.objects = vec![floor, back_wall, middle, right, left];
