@@ -100,6 +100,24 @@ impl World {
         let refract_ray = Ray::new(hit_info.under_point, direction);
         self.color_from(&refract_ray, remaining - 1) * hit_info.object.material.transparaency
     }
+
+    pub fn schlick(hit_info: &HitInfo) -> f64 {
+        let mut cos = Vector::dot(hit_info.eyev, hit_info.normal);
+        if hit_info.n1 > hit_info.n2 {
+            let n = hit_info.n1 / hit_info.n2;
+            let sin2_t = n * n * (1.0 - cos * cos);
+            if sin2_t > 1.0 {
+                return 1.0;
+            }
+
+            let cos_t = (1.0 - sin2_t).sqrt();
+            cos = cos_t;
+        }
+
+        let ratio = (hit_info.n1 - hit_info.n2) / (hit_info.n1 + hit_info.n2);
+        let r0 = ratio * ratio;
+        r0 + (1.0 - r0) * (1.0 - cos).powi(5)
+    }
 }
 
 #[cfg(test)]
@@ -128,7 +146,7 @@ mod test {
         rays::Ray,
         shapes::{Plane, Sphere},
         transformations::{translation, Builder},
-        Point, Vector,
+        Point, Vector, EQUALITY_EPSILON,
     };
 
     use super::*;
@@ -451,5 +469,44 @@ mod test {
         let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
         let color = w.shade_hit(&hit_info, 5);
         assert_eq!(color, Color::new(0.93642, 0.68642, 0.68642));
+    }
+
+    #[test]
+    fn schlick_approx_total_internal_reflection() {
+        let shape = Sphere::new_glass();
+        let r = Ray::new(
+            Point::new(0.0, 0.0, 2_f64.sqrt() / 2.0),
+            Vector::new(0.0, 1.0, 0.0),
+        );
+        let xs = Intersections::new(vec![
+            Intersection::new(-(2_f64.sqrt() / 2.0), &shape),
+            Intersection::new(2_f64.sqrt() / 2.0, &shape),
+        ]);
+        let hit_info = HitInfo::prepare(&xs, &r, 1).unwrap();
+        let reflectance = World::schlick(&hit_info);
+        assert!((reflectance - 1.0) < EQUALITY_EPSILON);
+    }
+
+    #[test]
+    fn schlick_approx_perpendicular() {
+        let shape = Sphere::new_glass();
+        let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 1.0, 0.0));
+        let xs = Intersections::new(vec![
+            Intersection::new(-1.0, &shape),
+            Intersection::new(1.0, &shape),
+        ]);
+        let hit_info = HitInfo::prepare(&xs, &r, 1).unwrap();
+        let reflectance = World::schlick(&hit_info);
+        assert!((reflectance - 0.04) < EQUALITY_EPSILON);
+    }
+
+    #[test]
+    fn schlick_approx_small_angle_n2_gt_n1() {
+        let shape = Sphere::new_glass();
+        let r = Ray::new(Point::new(0.0, 0.99, -2.0), Vector::new(0.0, 0.0, 1.0));
+        let xs = Intersections::new(vec![Intersection::new(1.8589, &shape)]);
+        let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
+        let reflectance = World::schlick(&hit_info);
+        assert!((reflectance - 0.48873) < EQUALITY_EPSILON);
     }
 }
