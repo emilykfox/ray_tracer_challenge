@@ -43,8 +43,9 @@ impl World {
         );
 
         let reflected = self.reflected_color(hit_info, remaining);
+        let refracted = self.refracted_color(hit_info, remaining);
 
-        surface + reflected
+        surface + reflected + refracted
     }
 
     pub fn color_from(&self, ray: &Ray, remaining: usize) -> Color {
@@ -426,5 +427,29 @@ mod test {
         let hit_info = HitInfo::prepare(&xs, &r, 2).unwrap();
         let color = w.refracted_color(&hit_info, 5);
         assert_eq!(color, Color::new(0.0, 0.99888, 0.04725));
+    }
+
+    #[test]
+    fn shade_hit_with_transparent_material() {
+        let mut w = default_world();
+        let mut floor = Shape::new(Plane);
+        let _ = floor.set_transform(translation(0.0, -1.0, 0.0));
+        floor.material.transparaency = 0.5;
+        floor.material.refractive_index = 1.5;
+        w.objects.push(floor);
+        let mut ball = Shape::new(Sphere);
+        let _ = ball.set_transform(translation(0.0, -3.5, -0.5));
+        ball.material.color = Color::new(1.0, 0.0, 0.0);
+        ball.material.ambient = 0.5;
+        w.objects.push(ball);
+        let floor = &w.objects[w.objects.len() - 2];
+        let r = Ray::new(
+            Point::new(0.0, 0.0, -3.0),
+            Vector::new(0.0, -(2_f64.sqrt() / 2.0), 2_f64.sqrt() / 2.0),
+        );
+        let xs = Intersections::new(vec![Intersection::new(2_f64.sqrt(), floor)]);
+        let hit_info = HitInfo::prepare(&xs, &r, 0).unwrap();
+        let color = w.shade_hit(&hit_info, 5);
+        assert_eq!(color, Color::new(0.93642, 0.68642, 0.68642));
     }
 }
